@@ -8,7 +8,15 @@ import { homedir } from 'os';
 import chalk from 'chalk';
 
 // Import strategy configuration
-const strategyConfigPath = path.join(process.cwd(), 'strategy-stages-mapping.json');
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Use __dirname to create an absolute path to the JSON file
+const strategyConfigPath = path.join(__dirname, 'strategy-stages-mapping.json');
 const strategyConfig = JSON.parse(fs.readFileSync(strategyConfigPath, 'utf8'));
 
 // Parse command line arguments
