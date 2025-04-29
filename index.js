@@ -389,7 +389,9 @@ The Sequential Thinking tool is powered by a flexible flow engine that supports:
 
 ### Getting Started
 
-1. Begin by selecting a strategy that matches your problem type:
+1. Begin by reading the documentation resource to understand which strategy best fits your problem type.
+
+2. Select a strategy that matches your problem type:
    - Set the 'strategy' parameter to one of the available strategies
    - Set 'thoughtNumber' to 1 for the first thought
 
@@ -470,7 +472,23 @@ The tool functions as a "software wizard" that guides you through the thinking p
 
 ## Session Management
 
-Each thinking session is stored with a unique ID that includes the strategy name. Sessions are never deleted, allowing you to reference past thinking processes.`;
+Each thinking session is stored with a unique ID that includes the strategy name. Sessions are never deleted, allowing you to reference past thinking processes.
+
+## Integration with Other Tools
+
+Sequential Thinking serves as an excellent force multiplier when combined with other tools:
+
+- **Research Tools**: Pair with web crawlers and search tools to gather information that informs your structured thinking process. For example, use ReAct strategy with search tools to dynamically explore information as needed.
+
+- **Memory Tools**: Create persistent records of your thinking sessions that can be referenced in future problem-solving. The session storage feature automatically preserves your thought process.
+
+- **Data Analysis Tools**: Combine with data processing tools to analyze complex datasets through structured thinking steps.
+
+- **Visualization Tools**: Use the output of your thinking process to generate diagrams, charts, or other visual representations.
+
+- **Decision Support Systems**: Feed the results of your sequential thinking into decision matrices or other frameworks.
+
+Remember to read the documentation resource first to select the most appropriate strategy, then leverage these tool combinations to maximize effectiveness.`;
 
 class ThinkingSessionStorage {
     constructor(storagePath) {
@@ -549,7 +567,7 @@ import sequentialThinkingSchema from './sequential-thinking-tool-schema.js';
 // Add the sequentialthinking-plus tool with the enhanced schema
 server.tool(
   "sequentialthinking-plus",
-  "A tool for dynamic and reflective problem-solving through structured thoughts using various reasoning strategies.",
+  "A tool for dynamic and reflective problem-solving through structured thoughts using various reasoning strategies. Begin by accessing the documentation resource to select the most appropriate strategy for your problem. Strategy execution works as an excellent force multiplier with other tools - combine with research tools (like crawlers and searchers) or memory tools to create persistent records of your structured thinking process.",
   sequentialThinkingSchema,
   async (args) => {
     const result = await thinkingServer.processThought(args);
