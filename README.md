@@ -65,10 +65,11 @@ The Sequential Thinking tool is designed for:
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
+- Node.js (v14 or higher) and npm (v6 or higher)
+  OR
+- Docker
 
-### Setup
+### Setup with Node.js
 
 1. Clone the repository:
 ```bash
@@ -91,6 +92,26 @@ chmod +x index.js
 node index.js
 ```
 
+### Setup with Docker
+
+1. Clone the repository:
+```bash
+git clone https://github.com/aaronsb/sequentialthinking-plus.git
+cd sequentialthinking-plus
+```
+
+2. Build the Docker image:
+```bash
+./scripts/build-local.sh
+```
+
+3. Run the Docker container:
+```bash
+./scripts/run-local.sh
+```
+
+This will run the server with the correct permissions, ensuring that any files created are owned by the current user, not root.
+
 ### Development
 
 To contribute to the project:
@@ -110,6 +131,8 @@ git remote add upstream https://github.com/aaronsb/sequentialthinking-plus.git
 
 Add this to your `cline_mcp_settings.json`:
 
+#### Using Node.js
+
 ```json
 {
   "mcpServers": {
@@ -120,6 +143,33 @@ Add this to your `cline_mcp_settings.json`:
       "command": "node",
       "args": [
         "/home/aaron/Projects/ai/mcp/sequentialthinking-plus/index.js"
+      ],
+      "env": {},
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+#### Using Docker
+
+```json
+{
+  "mcpServers": {
+    "sequentialthinking-plus": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--user",
+        "$(id -u):$(id -g)",
+        "-v",
+        "/tmp/sequentialthinking-plus-data:/app/data",
+        "sequentialthinking-plus:local"
       ],
       "env": {},
       "transportType": "stdio"
