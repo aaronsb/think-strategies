@@ -346,25 +346,44 @@ class SequentialThinkingServer {
 }
 
 // Detailed documentation for the Sequential Thinking tool
-const SEQUENTIAL_THINKING_DOCUMENTATION = `# Sequential Thinking Tool
+const SEQUENTIAL_THINKING_DOCUMENTATION = `# SequentialThinking Plus Tool
 
 A modular tool for dynamic and reflective problem-solving through structured thoughts using various reasoning strategies.
 
 ## Overview
 
-This tool helps analyze problems through flexible thinking processes that can adapt and evolve based on the selected strategy. Each strategy offers a different approach to problem-solving, with its own strengths and specialized use cases.
+This tool helps analyze problems through flexible thinking processes that can adapt and evolve based on the selected strategy. Each strategy offers a different approach to problem-solving, with its own strengths and specialized use cases. The underlying flow engine supports unfixed step numbers and branching approaches, allowing for truly adaptive reasoning.
 
 ## Available Strategies
 
 1. **Base Sequential** - A flexible approach allowing for dynamic thought adjustment, revision, and branching as needed.
 2. **Chain of Thought** - A linear approach that breaks down problems into sequential reasoning steps.
-3. **ReAct** - Combines reasoning with actions to gather information from external tools.
+3. **ReAct** - Combines reasoning with actions to gather information from external tools. Supports cyclic flows for multiple action-observation cycles.
 4. **ReWOO** - Separates planning, working, and solving phases with parallel tool execution.
-5. **Scratchpad** - Uses iterative calculations with explicit state tracking.
-6. **Self-Ask** - Breaks down problems into sub-questions that are answered sequentially.
+5. **Scratchpad** - Uses iterative calculations with explicit state tracking. Supports repeating calculation steps as needed.
+6. **Self-Ask** - Breaks down problems into sub-questions that are answered sequentially. Supports asking multiple sub-questions as needed.
 7. **Self-Consistency** - Explores multiple reasoning paths to find the most consistent answer.
 8. **Step-Back** - Abstracts the problem to identify general principles before solving.
-9. **Tree of Thoughts** - Explores multiple solution paths and evaluates their promise.
+9. **Tree of Thoughts** - Explores multiple solution paths and evaluates their promise. Supports branching and path selection.
+
+## Flow Engine Architecture
+
+The Sequential Thinking tool is powered by a flexible flow engine that supports:
+
+1. **Unfixed Step Numbers**:
+   - Cyclic stage transitions allow repeating steps as needed
+   - Dynamic thought count adjustment during the thinking process
+   - Strategy-specific iteration points for different reasoning approaches
+
+2. **Branching Approaches**:
+   - Explicit branch tracking for exploring alternative paths
+   - Strategy-specific branching mechanisms (especially in Tree of Thoughts)
+   - Branch creation, development, and selection capabilities
+
+3. **Strategy-Specific Flows**:
+   - Each strategy has its own defined flow pattern
+   - Customized stage transitions for different reasoning approaches
+   - Specialized stages for different problem-solving techniques
 
 ## How to Use
 
@@ -384,19 +403,36 @@ This tool helps analyze problems through flexible thinking processes that can ad
    - Provide the required parameters for each stage
    - The tool will guide you through the appropriate sequence of stages
    - Each response includes the next stage prompt and required parameters
+   - You can cycle back to previous stages when needed based on the strategy's flow pattern
 
 ### Core Parameters (All Strategies)
 
 - **strategy**: The thinking strategy being employed
 - **thought**: Your current thinking step
 - **thoughtNumber**: Current thought number
-- **totalThoughts**: Estimated total thoughts needed
+- **totalThoughts**: Estimated total thoughts needed (can be adjusted dynamically)
 - **nextThoughtNeeded**: Whether another thought step is needed
 - **currentStage**: Current stage in the thinking process flow
+- **needsMoreThoughts**: Indicates if more thoughts are needed than initially estimated
 
 ### Strategy-Specific Parameters
 
 Each strategy may require additional parameters specific to its approach. The tool will guide you on which parameters are needed at each stage.
+
+#### Branching Parameters
+- **branchFromThought**: The thought number from which to branch
+- **branchId**: Unique identifier for the branch
+- **isRevision**: Whether this thought revises a previous one
+- **revisesThought**: Which thought is being revised
+
+#### Strategy-Specific Flow Parameters
+- **ReAct**: action, observation
+- **ReWOO**: planningPhase, toolCalls
+- **Scratchpad**: stateVariables
+- **Self-Ask**: subQuestion, subQuestionAnswer, subQuestionNumber
+- **Self-Consistency**: reasoningPathId, pathAnswers
+- **Step-Back**: generalPrinciple
+- **Tree of Thoughts**: approachId, approaches, evaluationScore
 
 ### Wizard Functionality
 
@@ -417,6 +453,8 @@ The tool functions as a "software wizard" that guides you through the thinking p
 - Problems that require a multi-step solution
 - Tasks that need to maintain context over multiple steps
 - Situations where irrelevant information needs to be filtered out
+- Problems that benefit from exploring multiple approaches
+- Reasoning that requires iterative refinement
 
 ## Strategy Selection Guide
 
@@ -500,17 +538,17 @@ const thinkingServer = new SequentialThinkingServer(sessionStorage);
 
 // Create an MCP server
 const server = new McpServer({
-  name: "Sequential Thinking MCP Server",
-  version: "0.7.0",
+  name: "SequentialThinking Plus MCP Server",
+  version: "0.9.0",
   vendor: "Aaron Bockelie"
 });
 
 // Import the schema from the external file
 import sequentialThinkingSchema from './sequential-thinking-tool-schema.js';
 
-// Add the sequentialthinking tool with the enhanced schema
+// Add the sequentialthinking-plus tool with the enhanced schema
 server.tool(
-  "sequentialthinking",
+  "sequentialthinking-plus",
   "A tool for dynamic and reflective problem-solving through structured thoughts using various reasoning strategies.",
   sequentialThinkingSchema,
   async (args) => {
@@ -527,7 +565,7 @@ server.tool(
 // Add the documentation resource
 server.resource(
   "documentation",
-  "sequentialthinking://documentation",
+  "sequentialthinking-plus://documentation",
   { mimeType: "text/plain" },
   async (uri) => ({
     contents: [{
@@ -540,7 +578,7 @@ server.resource(
 // Add strategy configuration resource
 server.resource(
   "strategy-config",
-  "sequentialthinking://strategy-config",
+  "sequentialthinking-plus://strategy-config",
   { mimeType: "application/json" },
   async (uri) => ({
     contents: [{

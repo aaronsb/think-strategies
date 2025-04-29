@@ -1,4 +1,4 @@
-# Sequential Thinking MCP Server
+# SequentialThinking Plus MCP Server
 
 An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.
 
@@ -6,10 +6,12 @@ An MCP server implementation that provides a tool for dynamic and reflective pro
 
 Comprehensive documentation is available in the following files:
 
-- [Documentation Index](./SequentialThinking-Index.md) - Start here for an overview of all documentation
-- [Executive Summary](./SequentialThinking-ExecutiveSummary.md) - High-level overview of Sequential Thinking
-- [Practical Guide](./SequentialThinking-PracticalGuide.md) - Examples and best practices for using the tool
-- [Technical Documentation](./SequentialThinking-Documentation.md) - Detailed technical explanation of the architecture
+- [Documentation Index](./docs/SequentialThinking-Index.md) - Start here for an overview of all documentation
+- [Executive Summary](./docs/SequentialThinking-ExecutiveSummary.md) - High-level overview of Sequential Thinking
+- [Practical Guide](./docs/SequentialThinking-PracticalGuide.md) - Examples and best practices for using the tool
+- [Technical Documentation](./docs/SequentialThinking-Documentation.md) - Detailed technical explanation of the architecture
+- [Flow Engine Architecture](./docs/SequentialThinking-FlowEngine.md) - In-depth explanation of the flow engine's flexibility
+- [Strategy Comparison](./docs/strategy-comparison.md) - Detailed comparison of different thinking strategies
 
 ## Features
 
@@ -17,11 +19,13 @@ Comprehensive documentation is available in the following files:
 - Revise and refine thoughts as understanding deepens
 - Branch into alternative paths of reasoning
 - Adjust the total number of thoughts dynamically
+- Support for unfixed step numbers through cyclic flows
+- Strategy-specific flow patterns for different reasoning approaches
 - Generate and verify solution hypotheses
 
 ## Tools and Resources
 
-### Tool: sequentialthinking
+### Tool: sequentialthinking-plus
 
 Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
 
@@ -36,7 +40,7 @@ Facilitates a detailed, step-by-step thinking process for problem-solving and an
 - `branchId` (string, optional): Branch identifier
 - `needsMoreThoughts` (boolean, optional): If more thoughts are needed
 
-### Resource: sequentialthinking://documentation
+### Resource: sequentialthinking-plus://documentation
 
 Provides detailed documentation for the Sequential Thinking tool, including:
 - When to use the tool

@@ -13,6 +13,7 @@ This documentation set consists of the following files:
 | [Executive Summary](./SequentialThinking-ExecutiveSummary.md) | High-level overview of Sequential Thinking | Decision makers, new users |
 | [Practical Guide](./SequentialThinking-PracticalGuide.md) | Examples and best practices for using the tool | Practitioners, implementers |
 | [Technical Documentation](./SequentialThinking-Documentation.md) | Detailed technical explanation of the architecture and implementation | Developers, integrators |
+| [Flow Engine Architecture](./SequentialThinking-FlowEngine.md) | In-depth explanation of the flow engine's flexibility and strategy-specific flows | Developers, advanced users |
 
 ## Suggested Reading Order
 
@@ -31,7 +32,8 @@ This documentation set consists of the following files:
 
 1. [Executive Summary](./SequentialThinking-ExecutiveSummary.md) (for context)
 2. [Technical Documentation](./SequentialThinking-Documentation.md)
-3. [Practical Guide](./SequentialThinking-PracticalGuide.md) (for implementation examples)
+3. [Flow Engine Architecture](./SequentialThinking-FlowEngine.md) (for understanding flexibility and flows)
+4. [Practical Guide](./SequentialThinking-PracticalGuide.md) (for implementation examples)
 
 ## Key Features
 
@@ -39,6 +41,7 @@ This documentation set consists of the following files:
 - **Dynamic Adjustment**: Modify the thinking process as new insights emerge
 - **Revision Support**: Correct or refine previous thoughts when needed
 - **Branching Capability**: Explore alternative paths and approaches
+- **Flexible Flow Patterns**: Support for unfixed step numbers and strategy-specific flows
 - **Visual Formatting**: Clear presentation of thoughts with type indicators and progress tracking
 - **MCP Integration**: Easy integration with AI systems and other tools
 
@@ -49,6 +52,7 @@ To get started with Sequential Thinking:
 1. Review the [Executive Summary](./SequentialThinking-ExecutiveSummary.md) for a conceptual overview
 2. Follow the examples in the [Practical Guide](./SequentialThinking-PracticalGuide.md) to understand usage patterns
 3. Implement using the details in the [Technical Documentation](./SequentialThinking-Documentation.md)
+4. For advanced understanding of flow patterns, refer to the [Flow Engine Architecture](./SequentialThinking-FlowEngine.md)
 
 ## Diagrams
 
@@ -57,6 +61,7 @@ Each document contains Mermaid diagrams that illustrate different aspects of the
 - **Executive Summary**: Core concepts and simple flow diagrams
 - **Practical Guide**: Usage patterns and example scenarios
 - **Technical Documentation**: Architecture, data flow, and implementation details
+- **Flow Engine Architecture**: Strategy-specific flows, cyclic transitions, and branching mechanisms
 
 ## Conclusion
 

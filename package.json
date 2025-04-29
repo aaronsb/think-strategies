@@ -1,7 +1,12 @@
 {
   "name": "sequentialthinking-plus",
-  "version": "0.6.2",
+  "version": "0.9.0",
   "description": "MCP server for sequential thinking and problem solving",
+  "author": "Aaron Bockelie <aaronsb@github.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aaronsb/sequentialthinking-plus.git"
+  },
   "license": "MIT",
   "type": "module",
   "bin": {
