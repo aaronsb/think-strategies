@@ -186,6 +186,19 @@ flowchart TD
     style BC fill:#9f6,stroke:#333,stroke-width:1px
 ```
 
+### Chain of Thought
+```mermaid
+flowchart TD
+    PR["problem_reception"] --> SD["step_decomposition"]
+    SD --> SR["sequential_reasoning"]
+    SR --> SF["solution_formulation"]
+    SF --> AV["answer_verification"]
+    AV --> FR["final_response"]
+    
+    style SR fill:#f96,stroke:#333,stroke-width:2px
+    style SF fill:#9f6,stroke:#333,stroke-width:1px
+```
+
 ### ReAct
 ```mermaid
 flowchart TD
@@ -203,6 +216,35 @@ flowchart TD
     style AP fill:#9f6,stroke:#333,stroke-width:1px
 ```
 
+### ReWOO
+```mermaid
+flowchart TD
+    PR["problem_reception"] --> PP["planning_phase"]
+    PP --> TCS["tool_call_specification"]
+    TCS --> WP["working_phase"]
+    WP --> EC["evidence_collection"]
+    EC --> SP["solving_phase"]
+    SP --> FR["final_response"]
+    
+    style PP fill:#f96,stroke:#333,stroke-width:2px
+    style WP fill:#9f6,stroke:#333,stroke-width:1px
+```
+
+### Scratchpad
+```mermaid
+flowchart TD
+    PR["problem_reception"] --> SI["scratchpad_initialization"]
+    SI --> IC["iterative_calculation"]
+    IC --> ST["state_tracking"]
+    ST --> CD["continuation_decision"]
+    CD --> IC
+    CD --> RE["result_extraction"]
+    RE --> FR["final_response"]
+    
+    style CD fill:#f96,stroke:#333,stroke-width:2px
+    style IC fill:#9f6,stroke:#333,stroke-width:1px
+```
+
 ### Self-Ask
 ```mermaid
 flowchart TD
@@ -217,6 +259,35 @@ flowchart TD
     
     style CC fill:#f96,stroke:#333,stroke-width:2px
     style SQF fill:#9f6,stroke:#333,stroke-width:1px
+```
+
+### Self-Consistency
+```mermaid
+flowchart TD
+    PR["problem_reception"] --> MPS["multiple_path_sampling"]
+    MPS --> RPE["reasoning_path_execution"]
+    RPE --> AC["answer_collection"]
+    AC --> CA["consistency_analysis"]
+    CA --> MS["majority_selection"]
+    MS --> FR["final_response"]
+    
+    style RPE fill:#f96,stroke:#333,stroke-width:2px
+    style CA fill:#9f6,stroke:#333,stroke-width:1px
+```
+
+### Step-Back
+```mermaid
+flowchart TD
+    PR["problem_reception"] --> AB["abstraction"]
+    AB --> PI["principle_identification"]
+    PI --> AS["approach_selection"]
+    AS --> SA["specific_application"]
+    SA --> SBS["step_by_step_solution"]
+    SBS --> SV["solution_verification"]
+    SV --> FR["final_response"]
+    
+    style PI fill:#f96,stroke:#333,stroke-width:2px
+    style SBS fill:#9f6,stroke:#333,stroke-width:1px
 ```
 
 ### Tree of Thoughts

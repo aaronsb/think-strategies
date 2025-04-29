@@ -10,11 +10,10 @@ An MCP server implementation that provides a tool for dynamic and reflective pro
 
 Comprehensive documentation is available in the following files:
 
-- [Documentation Index](./docs/SequentialThinking-Index.md) - Start here for an overview of all documentation
 - [Executive Summary](./docs/SequentialThinking-ExecutiveSummary.md) - High-level overview of Sequential Thinking
 - [Practical Guide](./docs/SequentialThinking-PracticalGuide.md) - Examples and best practices for using the tool
 - [Technical Documentation](./docs/SequentialThinking-Documentation.md) - Detailed technical explanation of the architecture
-- [Flow Engine Architecture](./docs/SequentialThinking-FlowEngine.md) - In-depth explanation of the flow engine's flexibility
+- [Flow Engine Architecture](./docs/SequentialThinking-FlowEngine.md) - In-depth explanation of the flow engine's flexibility and strategy-specific flows
 - [Strategy Comparison](./docs/strategy-comparison.md) - Detailed comparison of different thinking strategies
 
 ## Features
