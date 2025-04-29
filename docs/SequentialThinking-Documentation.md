@@ -6,7 +6,7 @@ Sequential Thinking is a Model Context Protocol (MCP) server that facilitates st
 
 ## Architecture
 
-The Sequential Thinking server is built on the MCP framework, providing a specialized tool for breaking down complex problems into manageable steps while allowing for revisions, branching, and dynamic adjustment of the thinking process.
+The Sequential Thinking server is built on the MCP framework, providing a specialized tool for breaking down complex problems into manageable steps while allowing for revisions, branching, and dynamic adjustment of the thinking process. The server also includes persistent storage for completed thinking sessions.
 
 ```mermaid
 flowchart TB
@@ -22,6 +22,11 @@ flowchart TB
         Branches["Branches"]
         Formatter["Thought Formatter"]
         Validator["Thought Validator"]
+        Storage["Session Storage"]
+    end
+    
+    subgraph "File System"
+        SessionFiles["Session Files"]
     end
     
     Client["Client (LLM)"]
@@ -34,10 +39,14 @@ flowchart TB
     STServer --> Branches
     STServer --> Formatter
     STServer --> Validator
+    STServer --> Storage
+    Storage <--> SessionFiles
     
     style STServer fill:#f9f,stroke:#333,stroke-width:2px
     style ThoughtHistory fill:#bbf,stroke:#333,stroke-width:1px
     style Branches fill:#bbf,stroke:#333,stroke-width:1px
+    style Storage fill:#9bf,stroke:#333,stroke-width:2px
+    style SessionFiles fill:#9f9,stroke:#333,stroke-width:1px
 ```
 
 ## Core Components
@@ -293,6 +302,88 @@ flowchart TD
     style ThinkingServer fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
+## Session Storage
+
+The Sequential Thinking tool now includes persistent storage for completed thinking sessions. When a thinking session is completed (when `nextThoughtNeeded` is set to `false`), the entire session, including all thoughts and branches, is automatically saved to disk.
+
+### Storage Configuration
+
+The storage location is configurable via command-line arguments:
+
+```bash
+# Default storage location (~/Documents/thinking/)
+npx sequentialthinking-plus
+
+# Custom storage location
+npx sequentialthinking-plus --storage-path /path/to/custom/storage
+# or
+npx sequentialthinking-plus -s /path/to/custom/storage
+```
+
+### Session Data Structure
+
+Each session is stored in its own directory with a unique session ID based on the timestamp. The session data is saved as a JSON file with the following structure:
+
+```json
+{
+  "id": "session-20250428-145302",
+  "timestamp": "2025-04-28T14:53:02.123Z",
+  "thoughtHistory": [
+    {
+      "thought": "First thought content",
+      "thoughtNumber": 1,
+      "totalThoughts": 3,
+      "nextThoughtNeeded": true,
+      "isRevision": false
+    },
+    {
+      "thought": "Second thought content",
+      "thoughtNumber": 2,
+      "totalThoughts": 3,
+      "nextThoughtNeeded": true,
+      "isRevision": false
+    },
+    {
+      "thought": "Final thought content",
+      "thoughtNumber": 3,
+      "totalThoughts": 3,
+      "nextThoughtNeeded": false,
+      "isRevision": false
+    }
+  ],
+  "branches": {
+    "branch-1": [
+      {
+        "thought": "Alternative approach",
+        "thoughtNumber": 1,
+        "totalThoughts": 2,
+        "nextThoughtNeeded": true,
+        "branchFromThought": 2,
+        "branchId": "branch-1"
+      }
+    ]
+  }
+}
+```
+
+### Storage Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client (LLM)
+    participant ST as SequentialThinkingServer
+    participant Storage as ThinkingSessionStorage
+    participant FS as File System
+    
+    Client->>ST: Final thought (nextThoughtNeeded: false)
+    ST->>ST: Process thought
+    ST->>Storage: saveSession(sessionId, thoughtHistory, branches)
+    Storage->>FS: Create session directory
+    Storage->>FS: Write session.json
+    Storage-->>ST: Return saved file path
+    ST->>Client: Return thought status with sessionSaved: true
+```
+
 ## Conclusion
 
-The Sequential Thinking tool provides a powerful framework for structured problem-solving that can adapt to the complexity of the problem at hand. By supporting revisions, branching, and dynamic adjustment of the thinking process, it enables more effective and flexible reasoning.
+The Sequential Thinking tool provides a powerful framework for structured problem-solving that can adapt to the complexity of the problem at hand. By supporting revisions, branching, dynamic adjustment of the thinking process, and persistent storage of completed sessions, it enables more effective, flexible, and reusable reasoning.

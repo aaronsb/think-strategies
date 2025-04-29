@@ -1,0 +1,363 @@
+{
+  "strategyStages": {
+    "base_sequential": [
+      "problem_reception",
+      "initial_thought_planning",
+      "thought_generation",
+      "thought_evaluation",
+      "thought_revision",
+      "continuation_decision",
+      "thought_adjustment",
+      "branch_creation",
+      "hypothesis_generation",
+      "hypothesis_verification",
+      "solution_finalization",
+      "final_response"
+    ],
+    "chain_of_thought": [
+      "problem_reception",
+      "step_decomposition",
+      "sequential_reasoning",
+      "solution_formulation",
+      "answer_verification",
+      "final_response"
+    ],
+    "react": [
+      "problem_reception",
+      "initial_reasoning",
+      "action_planning",
+      "action_execution",
+      "observation_reception",
+      "reasoning_update",
+      "evaluation_checkpoint",
+      "solution_formulation",
+      "final_response"
+    ],
+    "rewoo": [
+      "problem_reception",
+      "planning_phase",
+      "tool_call_specification",
+      "working_phase",
+      "evidence_collection",
+      "solving_phase",
+      "final_response"
+    ],
+    "scratchpad": [
+      "problem_reception",
+      "scratchpad_initialization",
+      "iterative_calculation",
+      "state_tracking",
+      "continuation_decision",
+      "result_extraction",
+      "final_response"
+    ],
+    "self_ask": [
+      "problem_reception",
+      "problem_decomposition",
+      "sub_question_formulation",
+      "sub_question_answering",
+      "answer_integration",
+      "completion_check",
+      "solution_formulation",
+      "final_response"
+    ],
+    "self_consistency": [
+      "problem_reception",
+      "multiple_path_sampling",
+      "reasoning_path_execution",
+      "answer_collection",
+      "consistency_analysis",
+      "majority_selection",
+      "final_response"
+    ],
+    "step_back": [
+      "problem_reception",
+      "abstraction",
+      "principle_identification",
+      "approach_selection",
+      "specific_application",
+      "step_by_step_solution",
+      "solution_verification",
+      "final_response"
+    ],
+    "tree_of_thoughts": [
+      "problem_reception",
+      "approach_exploration",
+      "branch_creation",
+      "branch_development",
+      "branch_evaluation",
+      "branch_selection",
+      "continuation_decision",
+      "solution_formulation",
+      "path_justification",
+      "final_response"
+    ]
+  },
+  "stageDescriptions": {
+    "problem_reception": "Receive and understand the problem statement",
+    "initial_thought_planning": "Estimate the number of thinking steps needed and plan the initial approach",
+    "thought_generation": "Generate a thought step that can include analytical steps, revisions, questions, or realizations",
+    "thought_evaluation": "Evaluate if the current thought is satisfactory or needs revision",
+    "thought_revision": "Revise a previous thought based on new insights or realizations",
+    "continuation_decision": "Decide if more thoughts are needed, even if at what seemed like the end",
+    "thought_adjustment": "Adjust the total number of thoughts needed based on problem complexity",
+    "branch_creation": "Create a new reasoning branch from a specific previous thought",
+    "hypothesis_generation": "Generate a solution hypothesis based on the chain of thought",
+    "hypothesis_verification": "Verify the hypothesis against the chain of thought steps",
+    "solution_finalization": "Finalize the solution based on the verified hypothesis",
+    "final_response": "Provide a single, correct answer as the final output",
+    
+    "step_decomposition": "Break down the problem into logical reasoning steps",
+    "sequential_reasoning": "Process each step in order, building toward the solution",
+    "solution_formulation": "Derive the final answer based on the previous reasoning steps",
+    "answer_verification": "Verify the answer against the original problem and reasoning",
+    
+    "initial_reasoning": "Initial analysis of the problem to determine needed information",
+    "action_planning": "Formulate a specific action to gather required information",
+    "action_execution": "Execute the planned action to interact with external tools/environment",
+    "observation_reception": "Receive and process observations from the executed action",
+    "reasoning_update": "Update reasoning based on new observations",
+    "evaluation_checkpoint": "Determine if more actions are needed or if sufficient information is available",
+    
+    "planning_phase": "Generate a comprehensive plan outlining all steps and required tool calls",
+    "tool_call_specification": "Specify all required tool calls with potential variables and dependencies",
+    "working_phase": "Execute all tool calls in the plan, potentially in parallel",
+    "evidence_collection": "Gather and organize all results from tool calls",
+    "solving_phase": "Use the results of all tool calls to generate the final answer",
+    
+    "scratchpad_initialization": "Set up the scratchpad environment with relevant variables and initial state",
+    "iterative_calculation": "Work through calculations or logical steps, updating the program state at each step",
+    "state_tracking": "Document and track changes to variables or logical state after each step",
+    "result_extraction": "Extract the final result from the program state",
+    
+    "problem_decomposition": "Break down the main question into smaller, answerable sub-questions",
+    "sub_question_formulation": "Formulate a specific sub-question that needs to be answered",
+    "sub_question_answering": "Answer the current sub-question based on available knowledge",
+    "answer_integration": "Integrate the sub-question answer into the overall reasoning process",
+    "completion_check": "Determine if all necessary sub-questions have been answered",
+    
+    "multiple_path_sampling": "Sample multiple diverse reasoning paths with different temperatures",
+    "reasoning_path_execution": "Execute each reasoning path in parallel, collecting all reasoning steps",
+    "answer_collection": "Collect all answers generated from the different reasoning paths",
+    "consistency_analysis": "Analyze the frequency and consistency of answers across reasoning paths",
+    "majority_selection": "Select the most frequently occurring answer as the final result",
+    
+    "abstraction": "Step back to identify the general type or category of the problem",
+    "principle_identification": "Identify the general principles, methods, or approaches that apply to this type of problem",
+    "approach_selection": "Select the most appropriate general approach for the specific problem",
+    "specific_application": "Apply the selected approach to the specific problem instance",
+    "step_by_step_solution": "Work through the solution steps using the selected approach",
+    "solution_verification": "Verify the solution against both specific problem requirements and general principles",
+    
+    "approach_exploration": "Generate multiple diverse approaches to solving the problem",
+    "branch_development": "Develop each branch by exploring its reasoning path step by step",
+    "branch_evaluation": "Evaluate the promise or feasibility of each reasoning branch",
+    "branch_selection": "Select the most promising branch(es) to continue pursuing",
+    "path_justification": "Justify why the selected path was most effective compared to alternatives"
+  },
+  "stageTransitions": {
+    "base_sequential": {
+      "problem_reception": ["initial_thought_planning"],
+      "initial_thought_planning": ["thought_generation"],
+      "thought_generation": ["thought_evaluation"],
+      "thought_evaluation": ["thought_revision", "continuation_decision"],
+      "thought_revision": ["continuation_decision"],
+      "continuation_decision": ["thought_adjustment", "branch_creation", "hypothesis_generation"],
+      "thought_adjustment": ["thought_generation"],
+      "branch_creation": ["thought_generation"],
+      "hypothesis_generation": ["hypothesis_verification"],
+      "hypothesis_verification": ["solution_finalization", "continuation_decision"],
+      "solution_finalization": ["final_response"],
+      "final_response": []
+    },
+    "chain_of_thought": {
+      "problem_reception": ["step_decomposition"],
+      "step_decomposition": ["sequential_reasoning"],
+      "sequential_reasoning": ["solution_formulation"],
+      "solution_formulation": ["answer_verification"],
+      "answer_verification": ["final_response"],
+      "final_response": []
+    },
+    "react": {
+      "problem_reception": ["initial_reasoning"],
+      "initial_reasoning": ["action_planning"],
+      "action_planning": ["action_execution"],
+      "action_execution": ["observation_reception"],
+      "observation_reception": ["reasoning_update"],
+      "reasoning_update": ["evaluation_checkpoint"],
+      "evaluation_checkpoint": ["action_planning", "solution_formulation"],
+      "solution_formulation": ["final_response"],
+      "final_response": []
+    },
+    "rewoo": {
+      "problem_reception": ["planning_phase"],
+      "planning_phase": ["tool_call_specification"],
+      "tool_call_specification": ["working_phase"],
+      "working_phase": ["evidence_collection"],
+      "evidence_collection": ["solving_phase"],
+      "solving_phase": ["final_response"],
+      "final_response": []
+    },
+    "scratchpad": {
+      "problem_reception": ["scratchpad_initialization"],
+      "scratchpad_initialization": ["iterative_calculation"],
+      "iterative_calculation": ["state_tracking"],
+      "state_tracking": ["continuation_decision"],
+      "continuation_decision": ["iterative_calculation", "result_extraction"],
+      "result_extraction": ["final_response"],
+      "final_response": []
+    },
+    "self_ask": {
+      "problem_reception": ["problem_decomposition"],
+      "problem_decomposition": ["sub_question_formulation"],
+      "sub_question_formulation": ["sub_question_answering"],
+      "sub_question_answering": ["answer_integration"],
+      "answer_integration": ["completion_check"],
+      "completion_check": ["sub_question_formulation", "solution_formulation"],
+      "solution_formulation": ["final_response"],
+      "final_response": []
+    },
+    "self_consistency": {
+      "problem_reception": ["multiple_path_sampling"],
+      "multiple_path_sampling": ["reasoning_path_execution"],
+      "reasoning_path_execution": ["answer_collection"],
+      "answer_collection": ["consistency_analysis"],
+      "consistency_analysis": ["majority_selection"],
+      "majority_selection": ["final_response"],
+      "final_response": []
+    },
+    "step_back": {
+      "problem_reception": ["abstraction"],
+      "abstraction": ["principle_identification"],
+      "principle_identification": ["approach_selection"],
+      "approach_selection": ["specific_application"],
+      "specific_application": ["step_by_step_solution"],
+      "step_by_step_solution": ["solution_verification"],
+      "solution_verification": ["final_response"],
+      "final_response": []
+    },
+    "tree_of_thoughts": {
+      "problem_reception": ["approach_exploration"],
+      "approach_exploration": ["branch_creation"],
+      "branch_creation": ["branch_development"],
+      "branch_development": ["branch_evaluation"],
+      "branch_evaluation": ["branch_selection"],
+      "branch_selection": ["continuation_decision"],
+      "continuation_decision": ["branch_development", "branch_creation", "solution_formulation"],
+      "solution_formulation": ["path_justification"],
+      "path_justification": ["final_response"],
+      "final_response": []
+    }
+  },
+  "strategyParameters": {
+    "base_sequential": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "adaptive",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": true
+    },
+    "chain_of_thought": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "linear",
+      "backtracking_allowed": false,
+      "verification_step": true,
+      "dynamic_thought_count": false,
+      "revision_allowed": false,
+      "branching_allowed": false
+    },
+    "react": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": true,
+      "path_linearity": "cyclic",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": false
+    },
+    "rewoo": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": true,
+      "path_linearity": "modular",
+      "backtracking_allowed": false,
+      "verification_step": false,
+      "dynamic_thought_count": false,
+      "revision_allowed": false,
+      "branching_allowed": false,
+      "parallel_processing": true
+    },
+    "scratchpad": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "iterative",
+      "backtracking_allowed": true,
+      "verification_step": false,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": false,
+      "state_tracking": true
+    },
+    "self_ask": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "hierarchical",
+      "backtracking_allowed": true,
+      "verification_step": false,
+      "dynamic_thought_count": true,
+      "revision_allowed": false,
+      "branching_allowed": false,
+      "question_decomposition": true
+    },
+    "self_consistency": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "parallel",
+      "backtracking_allowed": false,
+      "verification_step": true,
+      "dynamic_thought_count": false,
+      "revision_allowed": false,
+      "branching_allowed": false,
+      "multiple_paths": true,
+      "consensus_required": true
+    },
+    "step_back": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "hierarchical",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": false,
+      "revision_allowed": true,
+      "branching_allowed": false,
+      "abstraction_level": "high"
+    },
+    "tree_of_thoughts": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "branching",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": true,
+      "multiple_paths": true,
+      "path_evaluation": true
+    }
+  },
+  "promptTemplates": {
+    "base_sequential": "Let me solve this problem step by step, adjusting my approach as needed.\n\nProblem: {problem}\n\nInitial plan: I'll start with approximately {count} thoughts, but may adjust as needed.\n\n{{thought_sequence}}",
+    "chain_of_thought": "Let me think through this step by step.\n\nProblem: {problem}\n\n{{thought_sequence}}\n\nTherefore, the answer is: {{final_answer}}",
+    "react": "Problem: {problem}\n\nI'll solve this by thinking and taking actions as needed.\n\nThought: {{initial_reasoning}}\nAction: {{action}}\nObservation: {{observation}}\nThought: {{reasoning_update}}\n...\nFinal Answer: {{final_answer}}",
+    "rewoo": "Problem: {problem}\n\nLet me plan how to approach this:\n{{planning_phase}}\n\nNow I'll solve the problem using the evidence gathered:\n{{solving_phase}}\n\nFinal Answer: {{final_answer}}",
+    "scratchpad": "Problem: {problem}\n\n<scratchpad>\n{{iterative_calculation}}\n{{state_tracking}}\n</scratchpad>\n\nTherefore, the answer is: {{final_answer}}",
+    "self_ask": "Problem: {problem}\n\nTo answer this question, I need to break it down into smaller questions:\n1. {{sub_question_1}}?\n   Answer: {{sub_answer_1}}\n2. {{sub_question_2}}?\n   Answer: {{sub_answer_2}}\n...\nTherefore, the answer to the original question is: {{final_answer}}",
+    "self_consistency": "Problem: {problem}\n\nLet me explore multiple reasoning paths:\n\nPath 1: {{reasoning_path_1}}\nAnswer 1: {{answer_1}}\n\nPath 2: {{reasoning_path_2}}\nAnswer 2: {{answer_2}}\n...\n\nBased on consistency across paths, the most reliable answer is: {{final_answer}}",
+    "step_back": "Problem: {problem}\n\nBefore solving this specific problem, let's step back and consider the general principles or methods that apply to this type of problem.\n\nGeneral approach: {{general_principle}}\n\nNow let's apply this to our specific problem:\n{{step_by_step_solution}}\n\nTherefore, the answer is: {{final_answer}}",
+    "tree_of_thoughts": "Problem: {problem}\n\nLet's solve this step by step, exploring multiple approaches:\n\n1. First approach: {{approach_1}}\n2. Second approach: {{approach_2}}\n3. Third approach: {{approach_3}}\n\nEvaluating these approaches, the most promising solution is:\n{{solution_formulation}}\n\nTherefore, the answer is: {{final_answer}}"
+  }
+}

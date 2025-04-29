@@ -1,18 +1,60 @@
 #!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { 
-    CallToolRequestSchema, 
-    ListToolsRequestSchema,
-    ListResourcesRequestSchema,
-    ReadResourceRequestSchema
-} from "@modelcontextprotocol/sdk/types.js";
-// Fixed chalk import for ESM
+import { z } from "zod";
+import fs from 'fs-extra';
+import path from 'path-browserify';
+import { homedir } from 'os';
 import chalk from 'chalk';
 
+// Parse command line arguments
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const argv = yargs(hideBin(process.argv))
+    .option('storage-path', {
+        alias: 's',
+        type: 'string',
+        description: 'Path to store thinking sessions',
+        default: path.join(homedir(), 'Documents', 'thinking')
+    })
+    .help()
+    .alias('help', 'h')
+    .version()
+    .alias('version', 'v')
+    .parse();
+
+// Ensure storage directory exists
+const storagePath = argv['storage-path'];
+fs.ensureDirSync(storagePath);
+console.error(`Thinking sessions will be stored in: ${storagePath}`);
+
+// Sequential Thinking implementation
 class SequentialThinkingServer {
     thoughtHistory = [];
     branches = {};
+    sessionId = null;
+    storage = null;
+    
+    constructor(storage) {
+        this.storage = storage;
+        this.resetSession();
+    }
+    
+    resetSession() {
+        this.thoughtHistory = [];
+        this.branches = {};
+        this.sessionId = this.generateSessionId();
+        console.error(`New thinking session started with ID: ${this.sessionId}`);
+    }
+    
+    generateSessionId() {
+        const timestamp = new Date().toISOString()
+            .replace(/[-:]/g, '')
+            .replace('T', '-')
+            .replace(/\..+/, '');
+        return `session-${timestamp}`;
+    }
 
     validateThoughtData(input) {
         const data = input;
@@ -67,9 +109,15 @@ class SequentialThinkingServer {
 └${border}┘`;
     }
 
-    processThought(input) {
+    async processThought(input) {
         try {
             const validatedInput = this.validateThoughtData(input);
+            
+            // Reset session if this is the first thought of a new session
+            if (validatedInput.thoughtNumber === 1 && this.thoughtHistory.length > 0) {
+                this.resetSession();
+            }
+            
             if (validatedInput.thoughtNumber > validatedInput.totalThoughts) {
                 validatedInput.totalThoughts = validatedInput.thoughtNumber;
             }
@@ -82,29 +130,35 @@ class SequentialThinkingServer {
             }
             const formattedThought = this.formatThought(validatedInput);
             console.error(formattedThought);
+            
+            // If this is the final thought (nextThoughtNeeded is false), save the session
+            if (!validatedInput.nextThoughtNeeded && this.storage) {
+                try {
+                    const savedPath = await this.storage.saveSession(
+                        this.sessionId,
+                        this.thoughtHistory,
+                        this.branches
+                    );
+                    console.error(chalk.green(`✅ Thinking session saved to: ${savedPath}`));
+                } catch (saveError) {
+                    console.error(chalk.red(`❌ Error saving thinking session: ${saveError.message}`));
+                }
+            }
+            
             return {
-                content: [{
-                        type: "text",
-                        text: JSON.stringify({
-                            thoughtNumber: validatedInput.thoughtNumber,
-                            totalThoughts: validatedInput.totalThoughts,
-                            nextThoughtNeeded: validatedInput.nextThoughtNeeded,
-                            branches: Object.keys(this.branches),
-                            thoughtHistoryLength: this.thoughtHistory.length
-                        }, null, 2)
-                    }]
+                thoughtNumber: validatedInput.thoughtNumber,
+                totalThoughts: validatedInput.totalThoughts,
+                nextThoughtNeeded: validatedInput.nextThoughtNeeded,
+                branches: Object.keys(this.branches),
+                thoughtHistoryLength: this.thoughtHistory.length,
+                sessionId: this.sessionId,
+                sessionSaved: !validatedInput.nextThoughtNeeded
             };
         }
         catch (error) {
             return {
-                content: [{
-                        type: "text",
-                        text: JSON.stringify({
-                            error: error instanceof Error ? error.message : String(error),
-                            status: 'failed'
-                        }, null, 2)
-                    }],
-                isError: true
+                error: error instanceof Error ? error.message : String(error),
+                status: 'failed'
             };
         }
     }
@@ -166,130 +220,120 @@ You should:
 10. Provide a single, ideally correct answer as the final output
 11. Only set next_thought_needed to false when truly done and a satisfactory answer is reached`;
 
-const SEQUENTIAL_THINKING_TOOL = {
-    name: "sequentialthinking",
-    description: `A tool for dynamic and reflective problem-solving through structured thoughts.
-See the 'sequentialthinking://documentation' resource for detailed usage instructions.`,
-    inputSchema: {
-        type: "object",
-        properties: {
-            thought: {
-                type: "string",
-                description: "Your current thinking step"
-            },
-            nextThoughtNeeded: {
-                type: "boolean",
-                description: "Whether another thought step is needed"
-            },
-            thoughtNumber: {
-                type: "integer",
-                description: "Current thought number",
-                minimum: 1
-            },
-            totalThoughts: {
-                type: "integer",
-                description: "Estimated total thoughts needed",
-                minimum: 1
-            },
-            isRevision: {
-                type: "boolean",
-                description: "Whether this revises previous thinking"
-            },
-            revisesThought: {
-                type: "integer",
-                description: "Which thought is being reconsidered",
-                minimum: 1
-            },
-            branchFromThought: {
-                type: "integer",
-                description: "Branching point thought number",
-                minimum: 1
-            },
-            branchId: {
-                type: "string",
-                description: "Branch identifier"
-            },
-            needsMoreThoughts: {
-                type: "boolean",
-                description: "If more thoughts are needed"
-            }
-        },
-        required: ["thought", "nextThoughtNeeded", "thoughtNumber", "totalThoughts"]
+class ThinkingSessionStorage {
+    constructor(storagePath) {
+        this.storagePath = storagePath;
     }
-};
 
-const server = new Server({
-    name: "sequential-thinking-server",
-    version: "0.2.0",
-}, {
-    capabilities: {
-        tools: {},
-        resources: {},
-    },
-});
-
-const thinkingServer = new SequentialThinkingServer();
-
-// Set up resource handlers
-server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-    resources: [
-        {
-            uri: "sequentialthinking://documentation",
-            name: "Sequential Thinking Documentation",
-            description: "Detailed documentation for the Sequential Thinking tool",
-            mimeType: "text/plain"
-        }
-    ],
-}));
-
-server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-    if (request.params.uri === "sequentialthinking://documentation") {
-        return {
-            contents: [
-                {
-                    uri: request.params.uri,
-                    mimeType: "text/plain",
-                    text: SEQUENTIAL_THINKING_DOCUMENTATION
-                }
-            ]
+    async saveSession(sessionId, thoughtHistory, branches) {
+        const sessionDir = path.join(this.storagePath, sessionId);
+        await fs.ensureDir(sessionDir);
+        
+        const sessionData = {
+            id: sessionId,
+            timestamp: new Date().toISOString(),
+            thoughtHistory,
+            branches
         };
+        
+        const filePath = path.join(sessionDir, 'session.json');
+        await fs.writeJson(filePath, sessionData, { spaces: 2 });
+        
+        return filePath;
     }
-    
-    return {
-        contents: [
-            {
-                uri: request.params.uri,
-                mimeType: "text/plain",
-                text: `Resource not found: ${request.params.uri}`
+
+    async listSessions() {
+        await fs.ensureDir(this.storagePath);
+        const dirs = await fs.readdir(this.storagePath);
+        
+        const sessions = [];
+        for (const dir of dirs) {
+            const sessionPath = path.join(this.storagePath, dir, 'session.json');
+            if (await fs.pathExists(sessionPath)) {
+                try {
+                    const sessionData = await fs.readJson(sessionPath);
+                    sessions.push({
+                        id: sessionData.id,
+                        timestamp: sessionData.timestamp,
+                        thoughtCount: sessionData.thoughtHistory.length,
+                        branchCount: Object.keys(sessionData.branches).length
+                    });
+                } catch (error) {
+                    console.error(`Error reading session ${dir}:`, error);
+                }
             }
-        ]
-    };
-});
-
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [SEQUENTIAL_THINKING_TOOL],
-}));
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    if (request.params.name === "sequentialthinking") {
-        return thinkingServer.processThought(request.params.arguments);
+        }
+        
+        return sessions;
     }
-    return {
-        content: [{
-                type: "text",
-                text: `Unknown tool: ${request.params.name}`
-            }],
-        isError: true
-    };
-});
 
-async function runServer() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Sequential Thinking MCP Server running on stdio");
+    async getSession(sessionId) {
+        const sessionPath = path.join(this.storagePath, sessionId, 'session.json');
+        if (await fs.pathExists(sessionPath)) {
+            return await fs.readJson(sessionPath);
+        }
+        return null;
+    }
 }
 
-runServer().catch((error) => {
-    console.error("Fatal error running server:", error);
-    process.exit(1);
+// Create storage instance
+const sessionStorage = new ThinkingSessionStorage(storagePath);
+
+// Create the thinking server with storage
+const thinkingServer = new SequentialThinkingServer(sessionStorage);
+
+// Create an MCP server
+const server = new McpServer({
+  name: "Sequential Thinking MCP Server",
+  version: "0.6.2",
+  vendor: "Aaron Bockelie"
+});
+
+// Add the sequentialthinking tool
+server.tool(
+  "sequentialthinking",
+  "A tool for dynamic and reflective problem-solving through structured thoughts.",
+  {
+    thought: z.string().describe("Your current thinking step"),
+    nextThoughtNeeded: z.boolean().describe("Whether another thought step is needed"),
+    thoughtNumber: z.number().int().min(1).describe("Current thought number"),
+    totalThoughts: z.number().int().min(1).describe("Estimated total thoughts needed"),
+    isRevision: z.boolean().optional().describe("Whether this revises previous thinking"),
+    revisesThought: z.number().int().min(1).optional().describe("Which thought is being reconsidered"),
+    branchFromThought: z.number().int().min(1).optional().describe("Branching point thought number"),
+    branchId: z.string().optional().describe("Branch identifier"),
+    needsMoreThoughts: z.boolean().optional().describe("If more thoughts are needed")
+  },
+  async (args) => {
+    const result = await thinkingServer.processThought(args);
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify(result, null, 2)
+      }]
+    };
+  }
+);
+
+// Add the documentation resource
+server.resource(
+  "documentation",
+  "sequentialthinking://documentation",
+  { mimeType: "text/plain" },
+  async (uri) => ({
+    contents: [{
+      uri: uri.href,
+      text: SEQUENTIAL_THINKING_DOCUMENTATION
+    }]
+  })
+);
+
+// Start the server with stdio transport
+const transport = new StdioServerTransport();
+console.error("Sequential Thinking Server running on stdio");
+
+// Connect the server to the transport
+server.connect(transport).catch((error) => {
+  console.error("Fatal error running server:", error);
+  process.exit(1);
 });
