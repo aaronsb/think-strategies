@@ -258,7 +258,14 @@
       "verification_step": true,
       "dynamic_thought_count": true,
       "revision_allowed": true,
-      "branching_allowed": true
+      "branching_allowed": true,
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium"
     },
     "chain_of_thought": {
       "thought_visibility": "explicit",
@@ -268,7 +275,14 @@
       "verification_step": true,
       "dynamic_thought_count": false,
       "revision_allowed": false,
-      "branching_allowed": false
+      "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "low"
     },
     "react": {
       "thought_visibility": "explicit",
@@ -278,7 +292,14 @@
       "verification_step": true,
       "dynamic_thought_count": true,
       "revision_allowed": true,
-      "branching_allowed": false
+      "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": true,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium"
     },
     "rewoo": {
       "thought_visibility": "explicit",
@@ -289,7 +310,13 @@
       "dynamic_thought_count": false,
       "revision_allowed": false,
       "branching_allowed": false,
-      "parallel_processing": true
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": true,
+      "question_decomposition": false,
+      "parallel_processing": true,
+      "consensus_required": false,
+      "abstraction_level": "medium"
     },
     "scratchpad": {
       "thought_visibility": "explicit",
@@ -300,7 +327,13 @@
       "dynamic_thought_count": true,
       "revision_allowed": true,
       "branching_allowed": false,
-      "state_tracking": true
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": true,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "low"
     },
     "self_ask": {
       "thought_visibility": "explicit",
@@ -311,7 +344,13 @@
       "dynamic_thought_count": true,
       "revision_allowed": false,
       "branching_allowed": false,
-      "question_decomposition": true
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": false,
+      "question_decomposition": true,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium"
     },
     "self_consistency": {
       "thought_visibility": "explicit",
@@ -323,7 +362,12 @@
       "revision_allowed": false,
       "branching_allowed": false,
       "multiple_paths": true,
-      "consensus_required": true
+      "path_evaluation": true,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": true,
+      "consensus_required": true,
+      "abstraction_level": "low"
     },
     "step_back": {
       "thought_visibility": "explicit",
@@ -334,6 +378,12 @@
       "dynamic_thought_count": false,
       "revision_allowed": true,
       "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": false,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
       "abstraction_level": "high"
     },
     "tree_of_thoughts": {
@@ -346,7 +396,12 @@
       "revision_allowed": true,
       "branching_allowed": true,
       "multiple_paths": true,
-      "path_evaluation": true
+      "path_evaluation": true,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium"
     }
   },
   "promptTemplates": {
@@ -359,5 +414,123 @@
     "self_consistency": "Problem: {problem}\n\nLet me explore multiple reasoning paths:\n\nPath 1: {{reasoning_path_1}}\nAnswer 1: {{answer_1}}\n\nPath 2: {{reasoning_path_2}}\nAnswer 2: {{answer_2}}\n...\n\nBased on consistency across paths, the most reliable answer is: {{final_answer}}",
     "step_back": "Problem: {problem}\n\nBefore solving this specific problem, let's step back and consider the general principles or methods that apply to this type of problem.\n\nGeneral approach: {{general_principle}}\n\nNow let's apply this to our specific problem:\n{{step_by_step_solution}}\n\nTherefore, the answer is: {{final_answer}}",
     "tree_of_thoughts": "Problem: {problem}\n\nLet's solve this step by step, exploring multiple approaches:\n\n1. First approach: {{approach_1}}\n2. Second approach: {{approach_2}}\n3. Third approach: {{approach_3}}\n\nEvaluating these approaches, the most promising solution is:\n{{solution_formulation}}\n\nTherefore, the answer is: {{final_answer}}"
+  },
+  "wizardConfig": {
+    "introMessages": {
+      "base_sequential": "You've selected the Base Sequential thinking strategy. This flexible approach allows for dynamic thought adjustment, revision, and branching as needed.",
+      "chain_of_thought": "You've selected the Chain of Thought strategy. This linear approach helps break down problems into sequential reasoning steps.",
+      "react": "You've selected the ReAct strategy. This approach combines reasoning with actions to gather information from external tools.",
+      "rewoo": "You've selected the ReWOO strategy. This approach separates planning, working, and solving phases with parallel tool execution.",
+      "scratchpad": "You've selected the Scratchpad strategy. This approach uses iterative calculations with explicit state tracking.",
+      "self_ask": "You've selected the Self-Ask strategy. This approach breaks down problems into sub-questions that are answered sequentially.",
+      "self_consistency": "You've selected the Self-Consistency strategy. This approach explores multiple reasoning paths to find the most consistent answer.",
+      "step_back": "You've selected the Step-Back strategy. This approach abstracts the problem to identify general principles before solving.",
+      "tree_of_thoughts": "You've selected the Tree of Thoughts strategy. This approach explores multiple solution paths and evaluates their promise."
+    },
+    "nextStagePrompts": {
+      "base_sequential": {
+        "problem_reception": "Please provide your problem statement.",
+        "initial_thought_planning": "How many thoughts do you estimate you'll need for this problem?",
+        "thought_generation": "Generate your next thought step.",
+        "thought_evaluation": "Is this thought satisfactory or does it need revision?",
+        "thought_revision": "Please revise thought #{thoughtNumber} based on your new insights.",
+        "continuation_decision": "Do you need more thoughts to solve this problem?",
+        "thought_adjustment": "Adjust your total thought count based on the problem complexity.",
+        "branch_creation": "Create a new reasoning branch from thought #{thoughtNumber}.",
+        "hypothesis_generation": "Generate a solution hypothesis based on your thoughts.",
+        "hypothesis_verification": "Verify your hypothesis against your reasoning steps.",
+        "solution_finalization": "Finalize your solution based on the verified hypothesis.",
+        "final_response": "Provide your final answer."
+      },
+      "chain_of_thought": {
+        "problem_reception": "Please provide your problem statement.",
+        "step_decomposition": "Break down the problem into logical reasoning steps.",
+        "sequential_reasoning": "Process each step in order, building toward the solution.",
+        "solution_formulation": "Derive the final answer based on your reasoning steps.",
+        "answer_verification": "Verify your answer against the original problem and reasoning.",
+        "final_response": "Provide your final answer."
+      },
+      "react": {
+        "problem_reception": "Please provide your problem statement.",
+        "initial_reasoning": "Analyze the problem to determine what information you need.",
+        "action_planning": "What specific action will you take to gather information?",
+        "action_execution": "Execute your planned action.",
+        "observation_reception": "What did you observe from your action?",
+        "reasoning_update": "Update your reasoning based on these observations.",
+        "evaluation_checkpoint": "Do you need more actions or have enough information?",
+        "solution_formulation": "Formulate your solution based on all gathered information.",
+        "final_response": "Provide your final answer."
+      },
+      "rewoo": {
+        "problem_reception": "Please provide your problem statement.",
+        "planning_phase": "Generate a comprehensive plan outlining all steps and required tool calls.",
+        "tool_call_specification": "Specify all required tool calls with potential variables and dependencies.",
+        "working_phase": "Execute all tool calls in your plan.",
+        "evidence_collection": "Gather and organize all results from your tool calls.",
+        "solving_phase": "Use the results to generate your final answer.",
+        "final_response": "Provide your final answer."
+      },
+      "scratchpad": {
+        "problem_reception": "Please provide your problem statement.",
+        "scratchpad_initialization": "Set up your scratchpad with relevant variables and initial state.",
+        "iterative_calculation": "Work through calculations or logical steps.",
+        "state_tracking": "Document and track changes to variables or logical state.",
+        "continuation_decision": "Do you need more calculation steps?",
+        "result_extraction": "Extract the final result from your calculations.",
+        "final_response": "Provide your final answer."
+      },
+      "self_ask": {
+        "problem_reception": "Please provide your problem statement.",
+        "problem_decomposition": "Break down the main question into smaller, answerable sub-questions.",
+        "sub_question_formulation": "Formulate a specific sub-question that needs to be answered.",
+        "sub_question_answering": "Answer the current sub-question based on available knowledge.",
+        "answer_integration": "Integrate the sub-question answer into your overall reasoning.",
+        "completion_check": "Have all necessary sub-questions been answered?",
+        "solution_formulation": "Formulate your solution based on all sub-question answers.",
+        "final_response": "Provide your final answer."
+      },
+      "self_consistency": {
+        "problem_reception": "Please provide your problem statement.",
+        "multiple_path_sampling": "Sample multiple diverse reasoning paths.",
+        "reasoning_path_execution": "Execute each reasoning path, collecting all reasoning steps.",
+        "answer_collection": "Collect all answers generated from the different reasoning paths.",
+        "consistency_analysis": "Analyze the frequency and consistency of answers across paths.",
+        "majority_selection": "Select the most frequently occurring answer as the final result.",
+        "final_response": "Provide your final answer."
+      },
+      "step_back": {
+        "problem_reception": "Please provide your problem statement.",
+        "abstraction": "Step back to identify the general type or category of the problem.",
+        "principle_identification": "Identify the general principles or approaches that apply.",
+        "approach_selection": "Select the most appropriate general approach for this problem.",
+        "specific_application": "Apply the selected approach to the specific problem.",
+        "step_by_step_solution": "Work through the solution steps using the selected approach.",
+        "solution_verification": "Verify the solution against both problem requirements and principles.",
+        "final_response": "Provide your final answer."
+      },
+      "tree_of_thoughts": {
+        "problem_reception": "Please provide your problem statement.",
+        "approach_exploration": "Generate multiple diverse approaches to solving the problem.",
+        "branch_creation": "Create branches for each promising approach.",
+        "branch_development": "Develop each branch by exploring its reasoning path.",
+        "branch_evaluation": "Evaluate the promise or feasibility of each reasoning branch.",
+        "branch_selection": "Select the most promising branch(es) to continue pursuing.",
+        "continuation_decision": "Do you need to explore more branches or develop existing ones further?",
+        "solution_formulation": "Formulate your solution based on the most promising path.",
+        "path_justification": "Justify why the selected path was most effective.",
+        "final_response": "Provide your final answer."
+      }
+    },
+    "requiredParameters": {
+      "base_sequential": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded"],
+      "chain_of_thought": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded"],
+      "react": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "action", "observation"],
+      "rewoo": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "planningPhase", "toolCalls"],
+      "scratchpad": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "stateVariables"],
+      "self_ask": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "subQuestion", "subQuestionAnswer", "subQuestionNumber"],
+      "self_consistency": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "reasoningPathId", "pathAnswers"],
+      "step_back": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "generalPrinciple"],
+      "tree_of_thoughts": ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded", "approachId", "approaches", "evaluationScore"]
+    }
   }
 }
