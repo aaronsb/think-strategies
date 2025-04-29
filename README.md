@@ -1,38 +1,8 @@
 # SequentialThinking Plus MCP Server
 
-```mermaid
-flowchart TD
-    BaseSeq["Base Sequential"] --> CoT["Chain of Thought"]
-    CoT --> ReAct["ReAct"]
-    ReAct --> ReWOO["ReWOO"]
-    ReWOO --> Scratchpad["Scratchpad"]
-    Scratchpad --> SelfAsk["Self-Ask"]
-    SelfAsk --> SelfCons["Self-Consistency"]
-    SelfCons --> StepBack["Step-Back"]
-    StepBack --> ToT["Tree of Thoughts"]
-    ToT --> BaseSeq
-    
-    BaseSeq --> ST[("sequentialthinking-plus")]
-    CoT --> ST
-    ReAct --> ST
-    ReWOO --> ST
-    Scratchpad --> ST
-    SelfAsk --> ST
-    SelfCons --> ST
-    StepBack --> ST
-    ToT --> ST
-    
-    style ST fill:#f9f,stroke:#333,stroke-width:4px
-    style BaseSeq fill:#bbf,stroke:#333,stroke-width:2px
-    style CoT fill:#bbf,stroke:#333,stroke-width:2px
-    style ReAct fill:#bbf,stroke:#333,stroke-width:2px
-    style ReWOO fill:#bbf,stroke:#333,stroke-width:2px
-    style Scratchpad fill:#bbf,stroke:#333,stroke-width:2px
-    style SelfAsk fill:#bbf,stroke:#333,stroke-width:2px
-    style SelfCons fill:#bbf,stroke:#333,stroke-width:2px
-    style StepBack fill:#bbf,stroke:#333,stroke-width:2px
-    style ToT fill:#bbf,stroke:#333,stroke-width:2px
-```
+<p align="center">
+  <img src="./docs/SequentialThinkingPlus.png" alt="SequentialThinking Plus Logo" width="600">
+</p>
 
 An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.
 
