@@ -142,7 +142,7 @@ Add this to your `cline_mcp_settings.json`:
       "timeout": 60,
       "command": "node",
       "args": [
-        "/home/aaron/Projects/ai/mcp/sequentialthinking-plus/index.js"
+        "/path/to/repo/sequentialthinking-plus/index.js"
       ],
       "env": {},
       "transportType": "stdio"
