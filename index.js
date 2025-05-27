@@ -219,7 +219,8 @@ class SequentialThinkingServer {
             branchFromThought, 
             branchId,
             strategy,
-            currentStage
+            currentStage,
+            nextThoughtNeeded
         } = thoughtData;
         
         let prefix = '';
@@ -243,12 +244,25 @@ class SequentialThinkingServer {
         const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context} ${strategyInfo} ${stageInfo}`;
         const border = '─'.repeat(Math.max(header.length, thought.length) + 4);
         
-        return `
+        // Add continuation hint if more thoughts are needed
+        let output = `
 ┌${border}┐
 │ ${header} │
 ├${border}┤
-│ ${thought.padEnd(border.length - 2)} │
+│ ${thought.padEnd(border.length - 2)} │`;
+
+        if (nextThoughtNeeded) {
+            const continuationHint = "Continue with your next thought step without stopping";
+            const hintBorder = '─'.repeat(Math.max(continuationHint.length + 4, border.length));
+            output += `
+├${hintBorder}┤
+│ ${chalk.green(continuationHint).padEnd(hintBorder.length - 2)} │`;
+        }
+        
+        output += `
 └${border}┘`;
+        
+        return output;
     }
 
     async processThought(input) {
@@ -354,6 +368,8 @@ A modular tool for dynamic and reflective problem-solving through structured tho
 
 This tool helps analyze problems through flexible thinking processes that can adapt and evolve based on the selected strategy. Each strategy offers a different approach to problem-solving, with its own strengths and specialized use cases. The underlying flow engine supports unfixed step numbers and branching approaches, allowing for truly adaptive reasoning.
 
+**IMPORTANT**: Always specify a 'strategy' parameter when starting. Don't default to base_sequential - choose the strategy that best matches your problem type!
+
 ## Available Strategies
 
 1. **Base Sequential** - A flexible approach allowing for dynamic thought adjustment, revision, and branching as needed.
@@ -389,10 +405,12 @@ The Sequential Thinking tool is powered by a flexible flow engine that supports:
 
 ### Getting Started
 
-1. Begin by reading the documentation resource to understand which strategy best fits your problem type.
+1. **Choose your strategy first!** Don't default to base_sequential. Pick from:
+   - base_sequential, chain_of_thought, react, rewoo, scratchpad, 
+   - self_ask, self_consistency, step_back, or tree_of_thoughts
 
-2. Select a strategy that matches your problem type:
-   - Set the 'strategy' parameter to one of the available strategies
+2. Start your first thought with your chosen strategy:
+   - Set the 'strategy' parameter to your selected strategy
    - Set 'thoughtNumber' to 1 for the first thought
 
 2. The tool will respond with:
@@ -458,17 +476,21 @@ The tool functions as a "software wizard" that guides you through the thinking p
 - Problems that benefit from exploring multiple approaches
 - Reasoning that requires iterative refinement
 
-## Strategy Selection Guide
+## Strategy Selection Guide (Quick Reference)
 
-- **Base Sequential**: For general problems requiring flexibility and potential revision
-- **Chain of Thought**: For straightforward problems with clear sequential steps
-- **ReAct**: When external information or tools are needed during reasoning
-- **ReWOO**: For problems requiring multiple tool calls that can be planned in advance
-- **Scratchpad**: For mathematical or algorithmic problems requiring state tracking
-- **Self-Ask**: For complex questions that can be broken down into simpler sub-questions
-- **Self-Consistency**: When you want to verify answers through multiple reasoning paths
-- **Step-Back**: For problems that benefit from identifying general principles first
-- **Tree of Thoughts**: When multiple approaches should be explored and evaluated
+### Choose Your Strategy Based on Problem Type:
+
+| Problem Type | Best Strategy | Why Use It |
+|-------------|---------------|------------|
+| General flexible reasoning | **base_sequential** | Allows revisions, branches, dynamic adjustment |
+| Step-by-step breakdown | **chain_of_thought** | Linear, clear sequential steps |
+| Need external tools/info | **react** | Combines thinking with tool actions |
+| Multiple tools upfront | **rewoo** | Plan all tools, execute in parallel |
+| Math/algorithms | **scratchpad** | Track variables, show calculations |
+| Complex questions | **self_ask** | Break into sub-questions |
+| Verify correctness | **self_consistency** | Multiple paths → consensus |
+| Abstract → specific | **step_back** | Find principles first, then apply |
+| Multiple approaches | **tree_of_thoughts** | Explore & evaluate different paths |
 
 ## Session Management
 
@@ -567,7 +589,7 @@ import sequentialThinkingSchema from './sequential-thinking-tool-schema.js';
 // Add the sequentialthinking-plus tool with the enhanced schema
 server.tool(
   "sequentialthinking-plus",
-  "A tool for dynamic and reflective problem-solving through structured thoughts using various reasoning strategies. Begin by accessing the documentation resource to select the most appropriate strategy for your problem. Strategy execution works as an excellent force multiplier with other tools - combine with research tools (like crawlers and searchers) or memory tools to create persistent records of your structured thinking process.",
+  "A tool for dynamic and reflective problem-solving through structured thoughts using 9 different reasoning strategies: base_sequential (flexible with revisions), chain_of_thought (linear sequential), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
   sequentialThinkingSchema,
   async (args) => {
     const result = await thinkingServer.processThought(args);
