@@ -359,7 +359,7 @@ The stage transitions are defined in the `stageTransitions` object in the strate
 
 ```json
 "stageTransitions": {
-  "base_sequential": {
+  "linear": {
     "problem_reception": ["initial_thought_planning"],
     "initial_thought_planning": ["thought_generation"],
     "thought_generation": ["thought_evaluation"],

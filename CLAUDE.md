@@ -73,3 +73,30 @@ When testing changes, ensure compatibility with MCP clients by validating:
 1. Tool schema matches expected format
 2. Resource responses are properly formatted
 3. Error messages follow MCP conventions
+
+## Testing & Quality Assurance
+
+Currently no automated tests are configured. When adding tests:
+1. Consider using Jest or Mocha for unit tests
+2. Test strategy stage transitions thoroughly
+3. Validate schema enforcement
+4. Mock MCP client interactions
+
+## Important Implementation Notes
+
+### Strategy Flow Engine
+The `StageManager` class implements a flexible flow engine that supports:
+- Linear progressions (e.g., chain_of_thought)
+- Cyclic patterns (e.g., react's observation → thought → action cycle)
+- Branching paths (e.g., tree_of_thoughts)
+- Dynamic stage determination based on thought content
+
+### Error Handling
+- Schema validation errors are returned as MCP error responses
+- File system errors (session storage) are logged but don't interrupt thinking
+- Invalid stage transitions are handled gracefully with fallback logic
+
+### Performance Considerations
+- Sessions are written synchronously to ensure data persistence
+- Large thinking sessions may consume significant disk space
+- Consider implementing session cleanup for production use

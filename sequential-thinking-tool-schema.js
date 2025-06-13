@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Export the schema for use in index.js
-export default {
+export default z.object({
   // Core properties from original schema
   thought: z.string().describe("Your current thinking step"),
   nextThoughtNeeded: z.boolean().describe("Whether another thought step is needed"),
@@ -15,7 +15,7 @@ export default {
   
   // Strategy selection and metadata
   strategy: z.enum([
-    "base_sequential", 
+    "linear", 
     "chain_of_thought", 
     "react", 
     "rewoo",
@@ -74,9 +74,17 @@ export default {
   verificationReasoning: z.string().optional().describe("Reasoning behind verification result"),
   finalAnswer: z.string().optional().describe("Final verified answer to the problem"),
   
-  // Wizard functionality properties
-  nextStagePrompt: z.string().optional().describe("Prompt for the next stage in the thinking process"),
-  nextStages: z.array(z.string()).optional().describe("Valid next stages in the thinking process"),
-  requiredParameters: z.array(z.string()).optional().describe("Required parameters for the current stage"),
-  wizardMessage: z.string().optional().describe("Guidance message from the thinking wizard")
-};
+  // Semantic routing properties
+  currentState: z.string().optional().describe("Current state in the thinking flow"),
+  stateDescription: z.string().optional().describe("Description of the current state"),
+  sessionToken: z.string().optional().describe("Session identifier token"),
+  availableActions: z.record(z.object({
+    description: z.string(),
+    requiredInputs: z.array(z.string()).optional(),
+    optionalInputs: z.array(z.string()).optional(),
+    hints: z.record(z.string()).optional(),
+    nextState: z.string().optional(),
+    isGlobal: z.boolean().optional()
+  })).optional().describe("Available actions with semantic hints"),
+  canSwitchStrategy: z.boolean().optional().describe("Whether strategy switching is allowed from current state")
+});

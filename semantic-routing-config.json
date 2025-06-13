@@ -1,0 +1,625 @@
+{
+  "strategySemantics": {
+    "linear": {
+      "problem_reception": {
+        "description": "Receive and understand the problem (Linear strategy: manual progression for exploratory thinking. Call other tools anytime for information or actions!)",
+        "availableActions": {
+          "start_planning": {
+            "nextState": "initial_thought_planning",
+            "description": "Ready to plan your approach? (You control when to advance - call other tools first if you need info)",
+            "requiredInputs": ["thought"],
+            "optionalInputs": ["totalThoughts"],
+            "hints": {
+              "thought": "Your understanding of the problem. Can include plans for tool calls you intend to make. Feel free to call other tools for information before advancing to the next step.",
+              "totalThoughts": "Estimated steps (easily adjustable as you explore)"
+            }
+          }
+        },
+        "canSwitchStrategy": true
+      },
+      "initial_thought_planning": {
+        "description": "Plan your thinking approach (Take time to consider your strategy. Call other tools if you need to gather information first)",
+        "availableActions": {
+          "begin_thinking": {
+            "nextState": "thought_generation",
+            "description": "Ready to start thinking through the problem? (Use other tools anytime before advancing)",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your planned approach. Can outline which tools you plan to call and when. Execute tool calls before advancing or include tool call plans in your thinking."
+            }
+          }
+        }
+      },
+      "thought_generation": {
+        "description": "Generate a thinking step (Explore ideas at your own pace. Use other tools between steps for research or actions)",
+        "availableActions": {
+          "evaluate_thought": {
+            "nextState": "thought_evaluation",
+            "description": "Evaluate this thought when ready (Call other tools first if you need more information)",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your thinking step. Can include plans for future tool calls or describe tools you intend to use. Execute tool calls before advancing or outline your tool usage strategy."
+            }
+          }
+        }
+      },
+      "thought_evaluation": {
+        "description": "Evaluate current thought quality",
+        "availableActions": {
+          "revise_thought": {
+            "nextState": "thought_revision",
+            "description": "Revise a previous thought",
+            "requiredInputs": ["thought", "isRevision", "revisesThought"],
+            "hints": {
+              "thought": "Your revised thinking",
+              "revisesThought": "The thought number you're revising"
+            }
+          },
+          "continue_thinking": {
+            "nextState": "continuation_decision",
+            "description": "Decide next steps",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your evaluation of progress so far"
+            }
+          }
+        }
+      },
+      "continuation_decision": {
+        "description": "Decide how to proceed",
+        "availableActions": {
+          "adjust_thoughts": {
+            "nextState": "thought_adjustment",
+            "description": "Adjust total number of thoughts needed",
+            "requiredInputs": ["thought", "needsMoreThoughts", "totalThoughts"],
+            "hints": {
+              "thought": "Explanation for adjustment",
+              "totalThoughts": "New total number of thoughts needed"
+            }
+          },
+          "create_branch": {
+            "nextState": "branch_creation",
+            "description": "Create alternative reasoning path",
+            "requiredInputs": ["thought", "branchFromThought", "branchId"],
+            "hints": {
+              "thought": "The new branch's first thought",
+              "branchFromThought": "Thought number to branch from",
+              "branchId": "Unique identifier for this branch"
+            }
+          },
+          "form_hypothesis": {
+            "nextState": "hypothesis_generation",
+            "description": "Form a solution hypothesis",
+            "requiredInputs": ["thought", "hypothesis"],
+            "hints": {
+              "thought": "Your reasoning for this hypothesis",
+              "hypothesis": "The proposed solution"
+            }
+          }
+        }
+      }
+    },
+    "chain_of_thought": {
+      "problem_reception": {
+        "description": "Receive the problem to solve (Use other tools anytime to gather information before advancing)",
+        "availableActions": {
+          "decompose": {
+            "nextState": "step_decomposition",
+            "description": "Break down into logical steps",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your understanding and decomposition approach. Can include plans for which tools to call for research or verification. Execute tool calls now or outline your tool strategy."
+            }
+          }
+        }
+      },
+      "step_decomposition": {
+        "description": "Break problem into steps (Call other tools if you need more information)",
+        "availableActions": {
+          "start_reasoning": {
+            "nextState": "sequential_reasoning",
+            "description": "Begin step-by-step reasoning",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "The logical steps you'll follow. Can include plans for tool calls at specific steps (e.g., 'Step 3: call file reader', 'Step 5: run calculation'). Execute tools as planned or outline tool usage strategy."
+            }
+          }
+        }
+      },
+      "sequential_reasoning": {
+        "description": "Work through reasoning steps (Use other tools anytime for research or verification)",
+        "availableActions": {
+          "next_step": {
+            "nextState": "sequential_reasoning",
+            "description": "Continue to next reasoning step",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your next logical reasoning step. Can include plans for upcoming tool calls or describe what information you need to gather. Execute planned tool calls or outline your research strategy."
+            }
+          },
+          "formulate_solution": {
+            "nextState": "solution_formulation",
+            "description": "Ready to formulate final answer",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Summary leading to solution. Can include plans for final verification tool calls or validation steps. Execute verification tools or outline your validation strategy."
+            }
+          }
+        }
+      }
+    },
+    "react": {
+      "problem_reception": {
+        "description": "Receive problem requiring actions (Call other tools anytime for information gathering)",
+        "availableActions": {
+          "analyze": {
+            "nextState": "initial_reasoning",
+            "description": "Analyze what information is needed",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Analysis of the problem and information gaps. Can include plans for which tools to call for information gathering (e.g., 'Need to search files', 'Plan to check database'). Execute tool calls or outline your information strategy."
+            }
+          }
+        }
+      },
+      "initial_reasoning": {
+        "description": "Reason about needed information",
+        "availableActions": {
+          "plan_action": {
+            "nextState": "action_planning",
+            "description": "Plan specific action to take",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your reasoning about what action is needed"
+            }
+          }
+        }
+      },
+      "action_planning": {
+        "description": "Plan the action to execute",
+        "availableActions": {
+          "execute": {
+            "nextState": "action_execution",
+            "description": "Execute the planned action",
+            "requiredInputs": ["thought", "action"],
+            "hints": {
+              "thought": "Explanation of the action",
+              "action": "The specific action to perform"
+            }
+          }
+        }
+      },
+      "action_execution": {
+        "description": "Execute the action",
+        "availableActions": {
+          "observe": {
+            "nextState": "observation_reception",
+            "description": "Record observation from action",
+            "requiredInputs": ["thought", "observation"],
+            "hints": {
+              "thought": "What you observed",
+              "observation": "The result of your action"
+            }
+          }
+        }
+      },
+      "observation_reception": {
+        "description": "Receive observation from action",
+        "availableActions": {
+          "update_reasoning": {
+            "nextState": "reasoning_update",
+            "description": "Update reasoning with observation",
+            "requiredInputs": ["thought", "observation"],
+            "hints": {
+              "thought": "How the observation affects your reasoning",
+              "observation": "What you observed from the action"
+            }
+          }
+        }
+      },
+      "evaluation_checkpoint": {
+        "description": "Evaluate if more actions needed",
+        "availableActions": {
+          "plan_another_action": {
+            "nextState": "action_planning",
+            "description": "Plan another action",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Why another action is needed"
+            }
+          },
+          "formulate_solution": {
+            "nextState": "solution_formulation",
+            "description": "Ready to provide solution",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Summary of findings leading to solution"
+            }
+          }
+        }
+      }
+    },
+    "rewoo": {
+      "problem_reception": {
+        "description": "Receive the problem to solve",
+        "availableActions": {
+          "start_planning": {
+            "nextState": "planning_phase",
+            "description": "Begin comprehensive planning",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Your understanding of the problem"
+            }
+          }
+        }
+      },
+      "planning_phase": {
+        "description": "Create comprehensive plan",
+        "availableActions": {
+          "specify_tools": {
+            "nextState": "tool_call_specification",
+            "description": "Specify required tool calls",
+            "requiredInputs": ["thought", "planningPhase"],
+            "hints": {
+              "thought": "Your complete plan with steps",
+              "planningPhase": "Set to true during planning"
+            }
+          }
+        }
+      },
+      "tool_call_specification": {
+        "description": "Define all tool calls needed",
+        "availableActions": {
+          "execute_tools": {
+            "nextState": "working_phase",
+            "description": "Execute tool calls in parallel",
+            "requiredInputs": ["thought", "toolCalls"],
+            "hints": {
+              "thought": "Tool execution strategy",
+              "toolCalls": "Array of {tool, input} objects"
+            }
+          }
+        }
+      }
+    },
+    "scratchpad": {
+      "problem_reception": {
+        "description": "Receive the problem",
+        "availableActions": {
+          "initialize": {
+            "nextState": "scratchpad_initialization",
+            "description": "Initialize scratchpad environment",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Problem understanding and approach"
+            }
+          }
+        }
+      },
+      "scratchpad_initialization": {
+        "description": "Set up working environment",
+        "availableActions": {
+          "start_calculations": {
+            "nextState": "iterative_calculation",
+            "description": "Begin iterative calculations",
+            "requiredInputs": ["thought", "stateVariables"],
+            "hints": {
+              "thought": "Initial setup and variables",
+              "stateVariables": "Initial state object"
+            }
+          }
+        }
+      },
+      "iterative_calculation": {
+        "description": "Perform calculations",
+        "availableActions": {
+          "update_state": {
+            "nextState": "state_tracking",
+            "description": "Update and track state",
+            "requiredInputs": ["thought", "stateVariables"],
+            "hints": {
+              "thought": "Calculation step",
+              "stateVariables": "Updated state"
+            }
+          }
+        }
+      },
+      "state_tracking": {
+        "description": "Track state changes",
+        "availableActions": {
+          "continue_calculation": {
+            "nextState": "iterative_calculation",
+            "description": "Continue with more calculations",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Next calculation needed"
+            }
+          },
+          "extract_result": {
+            "nextState": "result_extraction",
+            "description": "Extract final result",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Summary of calculations"
+            }
+          }
+        }
+      }
+    },
+    "self_ask": {
+      "problem_reception": {
+        "description": "Receive main question",
+        "availableActions": {
+          "decompose": {
+            "nextState": "problem_decomposition",
+            "description": "Break into sub-questions",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Analysis of the main question"
+            }
+          }
+        }
+      },
+      "sub_question_formulation": {
+        "description": "Formulate a sub-question",
+        "availableActions": {
+          "answer_subquestion": {
+            "nextState": "sub_question_answering",
+            "description": "Answer the sub-question",
+            "requiredInputs": ["thought", "subQuestion"],
+            "hints": {
+              "thought": "The sub-question to answer",
+              "subQuestion": "The specific sub-question"
+            }
+          }
+        }
+      },
+      "answer_integration": {
+        "description": "Integrate sub-answer",
+        "availableActions": {
+          "formulate_next": {
+            "nextState": "sub_question_formulation",
+            "description": "Ask another sub-question",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Integration and next question"
+            }
+          },
+          "complete": {
+            "nextState": "completion_check",
+            "description": "Check if complete",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Assessment of completeness"
+            }
+          }
+        }
+      }
+    },
+    "self_consistency": {
+      "problem_reception": {
+        "description": "Receive the problem",
+        "availableActions": {
+          "sample_paths": {
+            "nextState": "multiple_path_sampling",
+            "description": "Begin sampling reasoning paths",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Problem understanding"
+            }
+          }
+        }
+      },
+      "reasoning_path_execution": {
+        "description": "Execute reasoning paths",
+        "availableActions": {
+          "execute_path": {
+            "nextState": "reasoning_path_execution",
+            "description": "Execute another path",
+            "requiredInputs": ["thought", "reasoningPathId"],
+            "hints": {
+              "thought": "Reasoning for this path",
+              "reasoningPathId": "Unique path identifier"
+            }
+          },
+          "collect_answers": {
+            "nextState": "answer_collection",
+            "description": "Collect all path answers",
+            "requiredInputs": ["thought", "pathAnswers"],
+            "hints": {
+              "thought": "Summary of paths",
+              "pathAnswers": "Array of {pathId, answer}"
+            }
+          }
+        }
+      }
+    },
+    "step_back": {
+      "problem_reception": {
+        "description": "Receive specific problem",
+        "availableActions": {
+          "abstract": {
+            "nextState": "abstraction",
+            "description": "Step back to abstract view",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "The specific problem"
+            }
+          }
+        }
+      },
+      "abstraction": {
+        "description": "Abstract the problem",
+        "availableActions": {
+          "identify_principles": {
+            "nextState": "principle_identification",
+            "description": "Identify general principles",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "General problem category"
+            }
+          }
+        }
+      },
+      "principle_identification": {
+        "description": "Identify principles",
+        "availableActions": {
+          "select_approach": {
+            "nextState": "approach_selection",
+            "description": "Select solving approach",
+            "requiredInputs": ["thought", "generalPrinciple"],
+            "hints": {
+              "thought": "Identified principles",
+              "generalPrinciple": "The general principle"
+            }
+          }
+        }
+      }
+    },
+    "tree_of_thoughts": {
+      "problem_reception": {
+        "description": "Receive the problem",
+        "availableActions": {
+          "explore_approaches": {
+            "nextState": "approach_exploration",
+            "description": "Explore solution approaches",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Problem analysis"
+            }
+          }
+        }
+      },
+      "approach_exploration": {
+        "description": "Explore approaches",
+        "availableActions": {
+          "develop_branch": {
+            "nextState": "branch_development",
+            "description": "Develop solution branches",
+            "requiredInputs": ["thought", "approaches"],
+            "hints": {
+              "thought": "Approach ideas",
+              "approaches": "Array of {id, description, promise}"
+            }
+          }
+        }
+      },
+      "branch_development": {
+        "description": "Develop branches",
+        "availableActions": {
+          "continue_branch": {
+            "nextState": "branch_development",
+            "description": "Continue developing branch",
+            "requiredInputs": ["thought", "approachId"],
+            "hints": {
+              "thought": "Branch development step",
+              "approachId": "Current branch ID"
+            }
+          },
+          "evaluate_branches": {
+            "nextState": "branch_evaluation",
+            "description": "Evaluate all branches",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Ready to evaluate"
+            }
+          }
+        }
+      },
+      "branch_evaluation": {
+        "description": "Evaluate branches",
+        "availableActions": {
+          "select_branch": {
+            "nextState": "branch_selection",
+            "description": "Select best branch",
+            "requiredInputs": ["thought", "evaluationScore"],
+            "hints": {
+              "thought": "Evaluation reasoning",
+              "evaluationScore": "Score 0-10"
+            }
+          }
+        }
+      }
+    }
+  },
+  "globalActions": {
+    "switch_strategy": {
+      "description": "Switch to a different thinking strategy",
+      "availableFrom": ["problem_reception", "continuation_decision", "evaluation_checkpoint"],
+      "requiredInputs": ["strategy", "thought"],
+      "optionalInputs": ["preserveHistory"],
+      "hints": {
+        "strategy": "The new strategy to switch to",
+        "thought": "Reason for switching strategies",
+        "preserveHistory": "Whether to keep previous thinking history"
+      }
+    },
+    "abandon_and_restart": {
+      "description": "Abandon current approach and start over",
+      "availableFrom": "any",
+      "requiredInputs": ["thought"],
+      "hints": {
+        "thought": "Why you're starting over"
+      }
+    }
+  },
+  "parameterSemantics": {
+    "thought": {
+      "type": "string",
+      "description": "The content of your thinking step",
+      "contextual": true
+    },
+    "thoughtNumber": {
+      "type": "integer",
+      "description": "Current thought number in sequence",
+      "autoManaged": true
+    },
+    "totalThoughts": {
+      "type": "integer", 
+      "description": "Total number of thoughts expected",
+      "mutable": true
+    },
+    "nextThoughtNeeded": {
+      "type": "boolean",
+      "description": "Whether more thinking is required",
+      "contextual": true
+    },
+    "strategy": {
+      "type": "enum",
+      "values": ["linear", "chain_of_thought", "react", "rewoo", "scratchpad", "self_ask", "self_consistency", "step_back", "tree_of_thoughts"],
+      "description": "The thinking strategy to use"
+    },
+    "isRevision": {
+      "type": "boolean",
+      "description": "Whether this thought revises a previous one"
+    },
+    "revisesThought": {
+      "type": "integer",
+      "description": "Which thought number is being revised"
+    },
+    "branchFromThought": {
+      "type": "integer",
+      "description": "Thought number to branch from"
+    },
+    "branchId": {
+      "type": "string",
+      "description": "Unique identifier for the branch"
+    },
+    "hypothesis": {
+      "type": "string",
+      "description": "Proposed solution hypothesis"
+    },
+    "finalAnswer": {
+      "type": "string",
+      "description": "The final answer or solution"
+    },
+    "observation": {
+      "type": "string",
+      "description": "Result observed from an action"
+    },
+    "action": {
+      "type": "string",
+      "description": "Specific action to perform"
+    }
+  }
+}

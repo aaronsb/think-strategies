@@ -65,6 +65,29 @@ class StageManager {
         return this.transitions[this.currentStage] || [];
     }
 
+    getTransitionMetadata() {
+        const nextStages = this.getNextStages();
+        const metadata = {};
+        
+        nextStages.forEach(stage => {
+            metadata[stage] = {
+                description: this.getStageDescription(stage),
+                isTerminal: stage === "final_response",
+                isCyclic: this.transitions[stage] && this.transitions[stage].includes(this.currentStage),
+                requiredParameters: this.getStageRequiredParameters(stage)
+            };
+        });
+        
+        return metadata;
+    }
+
+    getStageRequiredParameters(stage) {
+        // Get parameters specific to a stage transition
+        const stageParams = strategyConfig.wizardConfig.stageParameters?.[this.strategy]?.[stage] || [];
+        const globalParams = ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded"];
+        return [...new Set([...globalParams, ...stageParams])];
+    }
+
     canTransitionTo(nextStage) {
         const validNextStages = this.getNextStages();
         return validNextStages.includes(nextStage);
@@ -79,18 +102,14 @@ class StageManager {
         return this.currentStage;
     }
 
+    // Deprecated - use ParameterRouter instead
     getStagePrompt() {
-        const promptConfig = strategyConfig.wizardConfig.nextStagePrompts[this.strategy] || {};
-        return promptConfig[this.currentStage] || "Please continue with the next step.";
+        return "Please continue with the next step.";
     }
 
+    // Deprecated - use ParameterRouter instead
     getRequiredParameters() {
-        return strategyConfig.wizardConfig.requiredParameters[this.strategy] || [];
-    }
-
-    getIntroMessage() {
-        return strategyConfig.wizardConfig.introMessages[this.strategy] || 
-            `You've selected the ${this.strategy} thinking strategy.`;
+        return ["thought", "thoughtNumber", "totalThoughts", "nextThoughtNeeded"];
     }
 
     isFirstStage() {
@@ -102,6 +121,153 @@ class StageManager {
     }
 }
 
+// Parameter Router for semantic routing
+class ParameterRouter {
+    constructor() {
+        // Load semantic routing configuration
+        const semanticConfigPath = path.join(__dirname, 'semantic-routing-config.json');
+        this.semanticConfig = JSON.parse(fs.readFileSync(semanticConfigPath, 'utf8'));
+    }
+
+    getAvailableActions(strategy, currentStage, thoughtHistory) {
+        const strategySemantics = this.semanticConfig.strategySemantics[strategy];
+        if (!strategySemantics || !strategySemantics[currentStage]) {
+            return null;
+        }
+
+        const stageConfig = strategySemantics[currentStage];
+        const availableActions = { ...(stageConfig.availableActions || {}) };
+
+        // Add global actions if applicable
+        Object.entries(this.semanticConfig.globalActions).forEach(([actionName, actionConfig]) => {
+            if (actionConfig.availableFrom === "any" || 
+                (Array.isArray(actionConfig.availableFrom) && actionConfig.availableFrom.includes(currentStage))) {
+                availableActions[actionName] = {
+                    description: actionConfig.description,
+                    requiredInputs: actionConfig.requiredInputs,
+                    optionalInputs: actionConfig.optionalInputs,
+                    hints: actionConfig.hints,
+                    isGlobal: true
+                };
+            }
+        });
+
+        return availableActions;
+    }
+
+    getRequiredParameters(strategy, currentStage, actionName) {
+        const actions = this.getAvailableActions(strategy, currentStage, []);
+        if (!actions || !actions[actionName]) {
+            return [];
+        }
+        return actions[actionName].requiredInputs || [];
+    }
+
+    getOptionalParameters(strategy, currentStage, actionName) {
+        const actions = this.getAvailableActions(strategy, currentStage, []);
+        if (!actions || !actions[actionName]) {
+            return [];
+        }
+        return actions[actionName].optionalInputs || [];
+    }
+
+    getParameterHints(strategy, currentStage, actionName) {
+        const actions = this.getAvailableActions(strategy, currentStage, []);
+        if (!actions || !actions[actionName]) {
+            return {};
+        }
+        return actions[actionName].hints || {};
+    }
+
+    getStageDescription(strategy, currentStage) {
+        const strategySemantics = this.semanticConfig.strategySemantics[strategy];
+        if (!strategySemantics || !strategySemantics[currentStage]) {
+            return "No description available";
+        }
+        return strategySemantics[currentStage].description;
+    }
+
+    canSwitchStrategy(strategy, currentStage) {
+        const strategySemantics = this.semanticConfig.strategySemantics[strategy];
+        if (!strategySemantics || !strategySemantics[currentStage]) {
+            return false;
+        }
+        return strategySemantics[currentStage].canSwitchStrategy || false;
+    }
+
+    determineActionTaken(strategy, currentStage, providedParams) {
+        const availableActions = this.getAvailableActions(strategy, currentStage, []);
+        
+        // Base parameters that are always present
+        const baseParams = ['thought', 'thoughtNumber', 'totalThoughts', 'nextThoughtNeeded', 'strategy'];
+        
+        // Get all non-base parameters provided
+        const providedNonBaseParams = Object.keys(providedParams).filter(
+            param => !baseParams.includes(param) && providedParams[param] !== undefined
+        );
+        
+        // Check each available action to see if its required parameters are satisfied
+        for (const [actionName, actionConfig] of Object.entries(availableActions)) {
+            const requiredInputs = actionConfig.requiredInputs || [];
+            const nonBaseRequired = requiredInputs.filter(param => !baseParams.includes(param));
+            
+            // If action has non-base required params, check if they're all provided
+            if (nonBaseRequired.length > 0) {
+                const hasAllRequired = nonBaseRequired.every(param => 
+                    providedParams[param] !== undefined && providedParams[param] !== null
+                );
+                
+                if (hasAllRequired) {
+                    return {
+                        actionName,
+                        nextState: actionConfig.nextState,
+                        isGlobal: actionConfig.isGlobal || false
+                    };
+                }
+            }
+        }
+        
+        // If no specific action matches, find the default action (one with only base params required)
+        for (const [actionName, actionConfig] of Object.entries(availableActions)) {
+            const requiredInputs = actionConfig.requiredInputs || [];
+            const hasOnlyBaseParams = requiredInputs.every(param => baseParams.includes(param));
+            
+            if (hasOnlyBaseParams && !actionConfig.isGlobal) {
+                return {
+                    actionName,
+                    nextState: actionConfig.nextState,
+                    isGlobal: false
+                };
+            }
+        }
+        
+        return null;
+    }
+
+    buildSemanticResponse(strategy, currentStage, thoughtHistory, sessionId) {
+        console.error("DEBUG: buildSemanticResponse called with:", {
+            strategy,
+            currentStage,
+            thoughtHistoryType: typeof thoughtHistory,
+            thoughtHistoryIsArray: Array.isArray(thoughtHistory),
+            sessionId
+        });
+        // Ensure thoughtHistory is always an array
+        const history = thoughtHistory || [];
+        const availableActions = this.getAvailableActions(strategy, currentStage, history);
+        const stageDescription = this.getStageDescription(strategy, currentStage);
+        
+        return {
+            currentState: currentStage,
+            stateDescription: stageDescription,
+            sessionToken: sessionId,
+            availableActions: availableActions,
+            canSwitchStrategy: this.canSwitchStrategy(strategy, currentStage),
+            thoughtHistoryLength: history.length
+        };
+    }
+}
+
 // Enhanced Sequential Thinking implementation
 class SequentialThinkingServer {
     thoughtHistory = [];
@@ -109,11 +275,13 @@ class SequentialThinkingServer {
     sessionId = null;
     storage = null;
     stageManager = null;
+    parameterRouter = null;
     strategy = null;
     isInitialized = false;
     
     constructor(storage) {
         this.storage = storage;
+        this.parameterRouter = new ParameterRouter();
         console.error(chalk.blue("Sequential Thinking Server initialized - waiting for strategy selection"));
     }
     
@@ -145,13 +313,21 @@ class SequentialThinkingServer {
         // Check if this is a strategy selection or reset request
         if (data.strategy && (!data.thoughtNumber || data.thoughtNumber === 1)) {
             this.resetSession(data.strategy);
+            
+            // Build semantic response for initial state
+            const semanticResponse = this.parameterRouter.buildSemanticResponse(
+                this.strategy,
+                this.stageManager.getCurrentStage(),
+                this.thoughtHistory,
+                this.sessionId
+            );
+            
             return {
-                strategy: data.strategy,
-                thought: data.thought || "Strategy selection",
+                ...semanticResponse,
+                thought: data.thought || '',
                 thoughtNumber: 1,
                 totalThoughts: data.totalThoughts || 1,
-                nextThoughtNeeded: true,
-                currentStage: this.stageManager.getCurrentStage()
+                nextThoughtNeeded: true
             };
         }
         
@@ -179,29 +355,40 @@ class SequentialThinkingServer {
             throw new Error('Invalid nextThoughtNeeded: must be a boolean');
         }
         
-        // Handle stage transitions
-        if (data.currentStage && data.currentStage !== this.stageManager.getCurrentStage()) {
+        // Determine action taken based on provided parameters
+        const action = this.parameterRouter.determineActionTaken(
+            this.strategy,
+            this.stageManager.getCurrentStage(),
+            data
+        );
+        
+        // Handle automatic stage transitions
+        if (action && action.nextState && !action.isGlobal) {
+            // Transition to next state if action determines it
+            if (this.stageManager.canTransitionTo(action.nextState)) {
+                this.stageManager.transitionTo(action.nextState);
+                console.error(chalk.cyan(`🔄 Transitioned to: ${action.nextState} (via ${action.actionName})`));
+            }
+        } else if (data.currentStage && data.currentStage !== this.stageManager.getCurrentStage()) {
+            // Manual stage transition (backward compatibility)
             if (!this.stageManager.canTransitionTo(data.currentStage)) {
                 throw new Error(`Invalid stage transition from ${this.stageManager.getCurrentStage()} to ${data.currentStage}`);
             }
             this.stageManager.transitionTo(data.currentStage);
         }
         
-        // Validate strategy-specific parameters
-        const requiredParams = this.stageManager.getRequiredParameters();
-        const missingParams = requiredParams.filter(param => 
-            param !== "thought" && 
-            param !== "thoughtNumber" && 
-            param !== "totalThoughts" && 
-            param !== "nextThoughtNeeded" && 
-            data[param] === undefined
-        );
-        
-        if (missingParams.length > 0 && !this.stageManager.isFirstStage()) {
-            console.error(chalk.yellow(`⚠️ Missing parameters for ${this.strategy} strategy: ${missingParams.join(', ')}`));
+        // Handle strategy switching
+        if (action && action.actionName === 'switch_strategy' && data.strategy !== this.strategy) {
+            const preserveHistory = data.preserveHistory || false;
+            const oldHistory = preserveHistory ? [...this.thoughtHistory] : [];
+            this.resetSession(data.strategy);
+            if (preserveHistory) {
+                this.thoughtHistory = oldHistory;
+            }
+            console.error(chalk.magenta(`🔀 Switched strategy to: ${data.strategy}`));
         }
         
-        // Return validated data with all properties
+        // Return validated data
         return {
             ...data,
             strategy: this.strategy,
@@ -242,14 +429,14 @@ class SequentialThinkingServer {
         const strategyInfo = chalk.magenta(`[${strategy}]`);
         const stageInfo = chalk.cyan(`[Stage: ${currentStage}]`);
         const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context} ${strategyInfo} ${stageInfo}`;
-        const border = '─'.repeat(Math.max(header.length, thought.length) + 4);
+        const border = '─'.repeat(Math.max(header.length, (thought || '').length) + 4);
         
         // Add continuation hint if more thoughts are needed
         let output = `
 ┌${border}┐
 │ ${header} │
 ├${border}┤
-│ ${thought.padEnd(border.length - 2)} │`;
+│ ${(thought || '').padEnd(border.length - 2)} │`;
 
         if (nextThoughtNeeded) {
             const continuationHint = "Continue with your next thought step without stopping";
@@ -267,6 +454,7 @@ class SequentialThinkingServer {
 
     async processThought(input) {
         try {
+            console.error("DEBUG: processThought called with:", JSON.stringify(input, null, 2));
             const validatedInput = this.validateThoughtData(input);
             
             // If we're waiting for strategy selection, return early
@@ -274,25 +462,10 @@ class SequentialThinkingServer {
                 return validatedInput;
             }
             
-            // If this is the first thought with a strategy selection, return wizard intro
+            // Log strategy start
             if (this.stageManager.isFirstStage() && validatedInput.thoughtNumber === 1) {
-                const introMessage = this.stageManager.getIntroMessage();
-                const nextStagePrompt = this.stageManager.getStagePrompt();
-                const requiredParams = this.stageManager.getRequiredParameters();
-                
-                console.error(chalk.green(`🧙 Strategy Wizard: ${introMessage}`));
-                
-                return {
-                    thoughtNumber: validatedInput.thoughtNumber,
-                    totalThoughts: validatedInput.totalThoughts,
-                    nextThoughtNeeded: true,
-                    strategy: this.strategy,
-                    currentStage: this.stageManager.getCurrentStage(),
-                    nextStagePrompt,
-                    requiredParameters: requiredParams,
-                    wizardMessage: introMessage,
-                    sessionId: this.sessionId
-                };
+                console.error(chalk.green(`🎯 Starting ${this.strategy} strategy`));
+                console.error(chalk.cyan(`📍 Stage: ${this.stageManager.getCurrentStage()}`));
             }
             
             // Normal thought processing
@@ -309,7 +482,11 @@ class SequentialThinkingServer {
                 this.branches[validatedInput.branchId].push(validatedInput);
             }
             
-            const formattedThought = this.formatThought(validatedInput);
+            const formattedThought = this.formatThought({
+                ...validatedInput,
+                strategy: this.strategy,
+                currentStage: this.stageManager.getCurrentStage()
+            });
             console.error(formattedThought);
             
             // If this is the final thought (nextThoughtNeeded is false), save the session
@@ -326,31 +503,25 @@ class SequentialThinkingServer {
                 }
             }
             
-            // Determine next stage prompt if there are more thoughts needed
-            let nextStagePrompt = null;
-            let nextStages = [];
-            
-            if (validatedInput.nextThoughtNeeded) {
-                nextStagePrompt = this.stageManager.getStagePrompt();
-                nextStages = this.stageManager.getNextStages();
-            }
+            // Build semantic routing response
+            const semanticResponse = this.parameterRouter.buildSemanticResponse(
+                this.strategy,
+                this.stageManager.getCurrentStage(),
+                this.thoughtHistory,
+                this.sessionId
+            );
             
             return {
+                ...semanticResponse,
                 thoughtNumber: validatedInput.thoughtNumber,
                 totalThoughts: validatedInput.totalThoughts,
                 nextThoughtNeeded: validatedInput.nextThoughtNeeded,
-                branches: Object.keys(this.branches),
-                thoughtHistoryLength: this.thoughtHistory.length,
-                sessionId: this.sessionId,
-                sessionSaved: !validatedInput.nextThoughtNeeded,
-                strategy: this.strategy,
-                currentStage: this.stageManager.getCurrentStage(),
-                nextStagePrompt,
-                nextStages,
-                requiredParameters: this.stageManager.getRequiredParameters()
+                sessionSaved: !validatedInput.nextThoughtNeeded
             };
         }
         catch (error) {
+            console.error("DEBUG: Error in processThought:", error);
+            console.error("DEBUG: Error stack:", error.stack);
             return {
                 error: error instanceof Error ? error.message : String(error),
                 status: 'failed'
@@ -368,11 +539,15 @@ A modular tool for dynamic and reflective problem-solving through structured tho
 
 This tool helps analyze problems through flexible thinking processes that can adapt and evolve based on the selected strategy. Each strategy offers a different approach to problem-solving, with its own strengths and specialized use cases. The underlying flow engine supports unfixed step numbers and branching approaches, allowing for truly adaptive reasoning.
 
-**IMPORTANT**: Always specify a 'strategy' parameter when starting. Don't default to base_sequential - choose the strategy that best matches your problem type!
+**IMPORTANT**: Always specify a 'strategy' parameter when starting. Don't default to linear - choose the strategy that best matches your problem type!
+
+**KEY FEATURE**: Between any thinking steps, you can call other tools for research, file access, calculations, or actions. The thinking strategy will pause while you gather information, then resume where you left off.
+
+**STRATEGIC PLANNING**: Your thoughts can include plans for future tool calls (e.g., "Step 3: search files for config", "Next: run calculation tool"). You can outline your tool usage strategy within your thinking, then execute those planned calls before advancing to the next step.
 
 ## Available Strategies
 
-1. **Base Sequential** - A flexible approach allowing for dynamic thought adjustment, revision, and branching as needed.
+1. **Linear** - Exploratory approach with manual progression control. You choose when to advance through each thinking stage, and can call other tools between any steps for research, file access, or actions. Perfect for deliberative problem-solving where you need to gather information as you think.
 2. **Chain of Thought** - A linear approach that breaks down problems into sequential reasoning steps.
 3. **ReAct** - Combines reasoning with actions to gather information from external tools. Supports cyclic flows for multiple action-observation cycles.
 4. **ReWOO** - Separates planning, working, and solving phases with parallel tool execution.
@@ -405,8 +580,8 @@ The Sequential Thinking tool is powered by a flexible flow engine that supports:
 
 ### Getting Started
 
-1. **Choose your strategy first!** Don't default to base_sequential. Pick from:
-   - base_sequential, chain_of_thought, react, rewoo, scratchpad, 
+1. **Choose your strategy first!** Don't default to linear. Pick from:
+   - linear, chain_of_thought, react, rewoo, scratchpad, 
    - self_ask, self_consistency, step_back, or tree_of_thoughts
 
 2. Start your first thought with your chosen strategy:
@@ -456,7 +631,7 @@ Each strategy may require additional parameters specific to its approach. The to
 
 ### Wizard Functionality
 
-The tool functions as a "software wizard" that guides you through the thinking process:
+The tool uses semantic routing to guide you through the thinking process:
 
 1. It confirms your strategy selection
 2. It informs you which parameters you need to provide
@@ -482,7 +657,7 @@ The tool functions as a "software wizard" that guides you through the thinking p
 
 | Problem Type | Best Strategy | Why Use It |
 |-------------|---------------|------------|
-| General flexible reasoning | **base_sequential** | Allows revisions, branches, dynamic adjustment |
+| Exploratory/deliberative thinking | **linear** | Manual control, call other tools between steps, research as you think |
 | Step-by-step breakdown | **chain_of_thought** | Linear, clear sequential steps |
 | Need external tools/info | **react** | Combines thinking with tool actions |
 | Multiple tools upfront | **rewoo** | Plan all tools, execute in parallel |
@@ -583,22 +758,43 @@ const server = new McpServer({
   vendor: "Aaron Bockelie"
 });
 
-// Import the schema from the external file
-import sequentialThinkingSchema from './sequential-thinking-tool-schema.js';
+// Define the schema using Zod
+const thinkingSchema = {
+  thought: z.string(),
+  nextThoughtNeeded: z.boolean(),
+  thoughtNumber: z.number(),
+  totalThoughts: z.number(),
+  strategy: z.string(),
+  action: z.string().optional(),
+  observation: z.string().optional(),
+  finalAnswer: z.string().optional(),
+  isRevision: z.boolean().optional(),
+  revisesThought: z.number().optional(),
+  branchFromThought: z.number().optional(),
+  branchId: z.string().optional()
+};
 
-// Add the think-strategies tool with the enhanced schema
+// Add the think-strategies tool with Zod schema
 server.tool(
   "think-strategies",
-  "A tool for dynamic and reflective problem-solving through structured thoughts using 9 different reasoning strategies: base_sequential (flexible with revisions), chain_of_thought (linear sequential), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
-  sequentialThinkingSchema,
+  "A tool for dynamic and reflective problem-solving through structured thoughts using 9 different reasoning strategies: linear (flexible with revisions), chain_of_thought (sequential steps), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
+  thinkingSchema,
   async (args) => {
-    const result = await thinkingServer.processThought(args);
-    return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(result, null, 2)
-      }]
-    };
+    try {
+      console.error("DEBUG: Tool handler called with args:", JSON.stringify(args, null, 2));
+      const result = await thinkingServer.processThought(args);
+      console.error("DEBUG: Tool handler result:", JSON.stringify(result, null, 2));
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify(result, null, 2)
+        }]
+      };
+    } catch (error) {
+      console.error("DEBUG: Error in tool handler:", error);
+      console.error("DEBUG: Error stack:", error.stack);
+      throw error;
+    }
   }
 );
 
