@@ -586,9 +586,9 @@ const server = new McpServer({
 // Import the schema from the external file
 import sequentialThinkingSchema from './sequential-thinking-tool-schema.js';
 
-// Add the sequentialthinking-plus tool with the enhanced schema
+// Add the think-strategies tool with the enhanced schema
 server.tool(
-  "sequentialthinking-plus",
+  "think-strategies",
   "A tool for dynamic and reflective problem-solving through structured thoughts using 9 different reasoning strategies: base_sequential (flexible with revisions), chain_of_thought (linear sequential), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
   sequentialThinkingSchema,
   async (args) => {
@@ -605,7 +605,7 @@ server.tool(
 // Add the documentation resource
 server.resource(
   "documentation",
-  "sequentialthinking-plus://documentation",
+  "think-strategies://documentation",
   { mimeType: "text/plain" },
   async (uri) => ({
     contents: [{
@@ -618,7 +618,7 @@ server.resource(
 // Add strategy configuration resource
 server.resource(
   "strategy-config",
-  "sequentialthinking-plus://strategy-config",
+  "think-strategies://strategy-config",
   { mimeType: "application/json" },
   async (uri) => ({
     contents: [{

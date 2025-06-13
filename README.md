@@ -28,7 +28,7 @@ Comprehensive documentation is available in the following files:
 
 ## Tools and Resources
 
-### Tool: sequentialthinking-plus
+### Tool: think-strategies
 
 Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
 
@@ -43,7 +43,7 @@ Facilitates a detailed, step-by-step thinking process for problem-solving and an
 - `branchId` (string, optional): Branch identifier
 - `needsMoreThoughts` (boolean, optional): If more thoughts are needed
 
-### Resource: sequentialthinking-plus://documentation
+### Resource: think-strategies://documentation
 
 Provides detailed documentation for the Sequential Thinking tool, including:
 - When to use the tool
@@ -136,7 +136,7 @@ Add this to your `cline_mcp_settings.json`:
 ```json
 {
   "mcpServers": {
-    "sequentialthinking-plus": {
+    "think-strategies": {
       "autoApprove": [],
       "disabled": false,
       "timeout": 60,
@@ -156,7 +156,7 @@ Add this to your `cline_mcp_settings.json`:
 ```json
 {
   "mcpServers": {
-    "sequentialthinking-plus": {
+    "think-strategies": {
       "autoApprove": [],
       "disabled": false,
       "timeout": 60,
