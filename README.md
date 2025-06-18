@@ -94,6 +94,15 @@ node index.js
 
 ### Setup with Docker
 
+#### Using Pre-built Image (Recommended)
+
+Pull and run the latest image from GitHub Container Registry:
+```bash
+docker run --rm -i ghcr.io/aaronsb/sequentialthinking-plus:latest
+```
+
+#### Building Locally
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/aaronsb/sequentialthinking-plus.git
@@ -169,7 +178,7 @@ Add this to your `cline_mcp_settings.json`:
         "$(id -u):$(id -g)",
         "-v",
         "/tmp/sequentialthinking-plus-data:/app/data",
-        "sequentialthinking-plus:local"
+        "ghcr.io/aaronsb/sequentialthinking-plus:latest"
       ],
       "env": {},
       "transportType": "stdio"
