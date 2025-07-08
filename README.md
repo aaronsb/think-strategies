@@ -69,6 +69,18 @@ The Sequential Thinking tool is designed for:
   OR
 - Docker
 
+### Quick Start with npx (Easiest)
+
+You can run the server directly using npx without cloning or installing:
+
+```bash
+# Run from npm registry (after publishing)
+npx sequentialthinking-plus
+
+# Or run directly from GitHub
+npx github:aaronsb/sequentialthinking-plus
+```
+
 ### Setup with Node.js
 
 1. Clone the repository:
@@ -136,9 +148,54 @@ git remote add upstream https://github.com/aaronsb/sequentialthinking-plus.git
 
 ## Configuration
 
+### Usage with Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+#### Using npx (Recommended)
+
+```json
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "autoApprove": ["think-strategies"],
+      "disabled": false,
+      "timeout": 60,
+      "command": "npx",
+      "args": [
+        "github:aaronsb/sequentialthinking-plus",
+        "--storage-path",
+        "/path/to/thinking/storage"
+      ],
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
 ### Usage with Cline
 
 Add this to your `cline_mcp_settings.json`:
+
+#### Using npx (Recommended)
+
+```json
+{
+  "mcpServers": {
+    "think-strategies": {
+      "autoApprove": [],
+      "disabled": false,
+      "timeout": 60,
+      "command": "npx",
+      "args": [
+        "github:aaronsb/sequentialthinking-plus"
+      ],
+      "env": {},
+      "transportType": "stdio"
+    }
+  }
+}
+```
 
 #### Using Node.js
 
