@@ -1,5 +1,5 @@
 {
-  "name": "sequentialthinking-plus",
+  "name": "think-strategies",
   "version": "0.9.1",
   "description": "MCP server for sequential thinking and problem solving",
   "author": "Aaron Bockelie <aaronsb@github.com>",
@@ -11,7 +11,7 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "sequentialthinking-plus": "index.js"
+    "think-strategies": "index.js"
   },
   "files": [
     "index.js",

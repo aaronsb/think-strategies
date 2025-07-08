@@ -75,7 +75,7 @@ You can run the server directly using npx without cloning or installing:
 
 ```bash
 # Run from npm registry (after publishing)
-npx sequentialthinking-plus
+npx think-strategies
 
 # Or run directly from GitHub
 npx github:aaronsb/sequentialthinking-plus
