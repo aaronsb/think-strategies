@@ -5,7 +5,7 @@
   "author": "Aaron Bockelie <aaronsb@github.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aaronsb/sequentialthinking-plus.git"
+    "url": "https://github.com/aaronsb/think-strategies.git"
   },
   "license": "MIT",
   "type": "module",

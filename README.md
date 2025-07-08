@@ -1,4 +1,4 @@
-# SequentialThinking Plus MCP Server
+# Think Strategies MCP Server
 
 <p align="center">
   <img src="./docs/SequentialThinkingPlus.png" alt="SequentialThinking Plus Logo" width="600">
@@ -78,15 +78,15 @@ You can run the server directly using npx without cloning or installing:
 npx think-strategies
 
 # Or run directly from GitHub
-npx github:aaronsb/sequentialthinking-plus
+npx github:aaronsb/think-strategies
 ```
 
 ### Setup with Node.js
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/aaronsb/sequentialthinking-plus.git
-cd sequentialthinking-plus
+git clone https://github.com/aaronsb/think-strategies.git
+cd think-strategies
 ```
 
 2. Install dependencies:
@@ -110,15 +110,15 @@ node index.js
 
 Pull and run the latest image from GitHub Container Registry:
 ```bash
-docker run --rm -i ghcr.io/aaronsb/sequentialthinking-plus:latest
+docker run --rm -i ghcr.io/aaronsb/think-strategies:latest
 ```
 
 #### Building Locally
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/aaronsb/sequentialthinking-plus.git
-cd sequentialthinking-plus
+git clone https://github.com/aaronsb/think-strategies.git
+cd think-strategies
 ```
 
 2. Build the Docker image:
@@ -141,7 +141,7 @@ To contribute to the project:
 2. Clone your fork locally
 3. Add the upstream repository:
 ```bash
-git remote add upstream https://github.com/aaronsb/sequentialthinking-plus.git
+git remote add upstream https://github.com/aaronsb/think-strategies.git
 ```
 4. Create a branch for your changes
 5. Submit a pull request with your changes
@@ -163,7 +163,7 @@ Add this to your `claude_desktop_config.json`:
       "timeout": 60,
       "command": "npx",
       "args": [
-        "github:aaronsb/sequentialthinking-plus",
+        "github:aaronsb/think-strategies",
         "--storage-path",
         "/path/to/thinking/storage"
       ],
@@ -188,7 +188,7 @@ Add this to your `cline_mcp_settings.json`:
       "timeout": 60,
       "command": "npx",
       "args": [
-        "github:aaronsb/sequentialthinking-plus"
+        "github:aaronsb/think-strategies"
       ],
       "env": {},
       "transportType": "stdio"
@@ -208,7 +208,7 @@ Add this to your `cline_mcp_settings.json`:
       "timeout": 60,
       "command": "node",
       "args": [
-        "/path/to/repo/sequentialthinking-plus/index.js"
+        "/path/to/repo/think-strategies/index.js"
       ],
       "env": {},
       "transportType": "stdio"
@@ -235,7 +235,7 @@ Add this to your `cline_mcp_settings.json`:
         "$(id -u):$(id -g)",
         "-v",
         "/tmp/sequentialthinking-plus-data:/app/data",
-        "ghcr.io/aaronsb/sequentialthinking-plus:latest"
+        "ghcr.io/aaronsb/think-strategies:latest"
       ],
       "env": {},
       "transportType": "stdio"
