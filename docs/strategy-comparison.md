@@ -12,6 +12,7 @@
 | **Self-Consistency** | Parallel | No | Yes | No | No | Multiple reasoning paths; majority voting |
 | **Step-Back** | Hierarchical | No | No | Yes | No | Abstract principles before specific solution |
 | **Tree of Thoughts** | Branching | No | Yes | Yes | Yes - via continuation_decision | Multiple approaches with evaluation and pruning; branch creation and selection |
+| **Trilemma** | Iterative | No | No | Yes | Yes - via propagation_decision | Balance three competing objectives; satisficing with thresholds; trade-off matrices |
 | **Base Sequential Thinking** | Adaptive | No | Yes | Yes | Yes - via continuation_decision | Dynamic adjustment of thought count and structure; comprehensive branching support |
 
 ## Flow Patterns Explained
@@ -92,6 +93,27 @@ flowchart TD
 - Branch evaluation and selection
 - Dynamic depth based on promise
 
+### Iterative Satisficing Flow (Trilemma)
+```mermaid
+flowchart TD
+    A["Problem with\n3 Objectives"] --> B["Identify\nTrilemma"]
+    B --> C["Initialize\nObjectives\n& Thresholds"]
+    C --> D["Evaluate\nTrade-offs"]
+    D --> E["Score Each\nObjective"]
+    E --> F["Satisficing\nIteration"]
+    F --> G["Check\nEquilibrium"]
+    G --> H{"All Thresholds\nMet?"}
+    H -->|"No"| I["Propagate\nSolution"]
+    I --> J["Refine"]
+    J --> D
+    H -->|"Yes"| K["Final\nBalance"]
+    K --> L["Solution"]
+```
+- Three competing objectives tracked
+- Iterative refinement toward thresholds
+- Trade-off matrix guides adjustments
+- Satisficing rather than optimizing
+
 ### Adaptive Flow (Base Sequential)
 ```mermaid
 flowchart TD
@@ -134,6 +156,8 @@ flowchart TD
 - **Step-Back**: Best when understanding general principles helps solve a specific instance. Excellent for novel or unfamiliar problem types.
 
 - **Tree of Thoughts**: Perfect for problems with multiple possible solution paths where evaluation and backtracking are beneficial. Great for creative tasks and puzzles. The branching flow supports exploring multiple approaches and selecting the most promising.
+
+- **Trilemma**: Ideal for situations requiring balance between three competing objectives that cannot all be maximized. Perfect for real-world trade-offs in project management, system design, or policy decisions. The iterative satisficing approach finds acceptable compromises.
 
 - **Base Sequential Thinking**: Most versatile approach that adapts to problem complexity with dynamic thought adjustment, revision, and branching. Good as a fallback strategy. The adaptive flow provides maximum flexibility.
 

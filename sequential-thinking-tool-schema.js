@@ -23,7 +23,8 @@ export default z.object({
     "self_ask", 
     "self_consistency", 
     "step_back", 
-    "tree_of_thoughts"
+    "tree_of_thoughts",
+    "trilemma"
   ]).describe("The thinking strategy being employed"),
   
   currentStage: z.string().optional().describe("Current stage in the thinking process flow"),
@@ -67,6 +68,27 @@ export default z.object({
     promise: z.number().min(0).max(10).optional()
   })).optional().describe("Different approaches being explored (ToT)"),
   evaluationScore: z.number().min(0).max(10).optional().describe("Evaluation score for current branch (ToT)"),
+  
+  // Trilemma properties
+  objectives: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    currentScore: z.number().min(0).max(1),
+    threshold: z.number().min(0).max(1),
+    priority: z.number().min(0).max(1).optional()
+  })).optional().describe("Three competing objectives with scores and thresholds (Trilemma)"),
+  tradeOffMatrix: z.array(z.object({
+    improving: z.string(),
+    affecting: z.string(),
+    impact: z.number().min(-1).max(1)
+  })).optional().describe("How improving one objective affects others (Trilemma)"),
+  iterationNumber: z.number().int().min(1).optional().describe("Current iteration in the satisficing process (Trilemma)"),
+  equilibriumReached: z.boolean().optional().describe("Whether all objectives meet their thresholds (Trilemma)"),
+  propagatedSolution: z.object({
+    configuration: z.record(z.number()),
+    overallScore: z.number().min(0).max(1)
+  }).optional().describe("Solution propagated from previous iteration (Trilemma)"),
   
   // Verification and solution properties
   hypothesis: z.string().optional().describe("Current solution hypothesis"),

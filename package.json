@@ -1,19 +1,37 @@
 {
-  "name": "sequentialthinking-plus",
-  "version": "0.9.0",
+  "name": "think-strategies",
+  "version": "0.9.1",
   "description": "MCP server for sequential thinking and problem solving",
   "author": "Aaron Bockelie <aaronsb@github.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aaronsb/sequentialthinking-plus.git"
+    "url": "git+https://github.com/aaronsb/think-strategies.git"
   },
   "license": "MIT",
   "type": "module",
+  "main": "index.js",
   "bin": {
-    "sequentialthinking-plus": "index.js"
+    "think-strategies": "index.js"
   },
+  "files": [
+    "index.js",
+    "sequential-thinking-tool-schema.js",
+    "strategy-stages-mapping.json",
+    "semantic-routing-config.json"
+  ],
   "scripts": {
     "start": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "thinking",
+    "problem-solving",
+    "ai",
+    "assistant"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.2",
