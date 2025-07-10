@@ -1,10 +1,24 @@
 # Think Strategies MCP Server
 
 <p align="center">
-  <img src="./docs/SequentialThinkingPlus.png" alt="SequentialThinking Plus Logo" width="600">
+  <h2>🧠 Think Strategies</h2>
+  <p><em>10 Reasoning Strategies for Structured Problem-Solving</em></p>
 </p>
 
-An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.
+## Overview
+
+An MCP server implementation that provides a tool for dynamic and reflective problem-solving through structured thinking processes. Choose from 10 different reasoning strategies:
+
+- **🔄 Linear** - Flexible thinking with revisions and branches
+- **🔗 Chain of Thought** - Sequential step-by-step reasoning
+- **🎯 React** - Reasoning combined with actions and observations
+- **📋 ReWOO** - Plan-execute pattern with parallel tool usage
+- **📝 Scratchpad** - Iterative calculations with state tracking
+- **❓ Self-Ask** - Decompose into sub-questions and answers
+- **🔍 Self-Consistency** - Multiple reasoning paths to consensus
+- **🔭 Step-Back** - Abstract principles before specific application
+- **🌳 Tree of Thoughts** - Explore and evaluate multiple branches
+- **⚖️ Trilemma** - Balance three competing objectives through satisficing
 
 ## Documentation
 

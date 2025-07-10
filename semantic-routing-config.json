@@ -540,6 +540,152 @@
           }
         }
       }
+    },
+    "trilemma": {
+      "problem_reception": {
+        "description": "Receive problem requiring trade-offs between three competing objectives",
+        "availableActions": {
+          "identify_trilemma": {
+            "nextState": "trilemma_identification",
+            "description": "Identify the three competing objectives",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What are the three objectives that cannot all be maximized?"
+            }
+          }
+        },
+        "canSwitchStrategy": true
+      },
+      "trilemma_identification": {
+        "description": "Identify and articulate the three competing objectives",
+        "availableActions": {
+          "initialize_objectives": {
+            "nextState": "objective_initialization",
+            "description": "Set up scoring metrics and thresholds",
+            "requiredInputs": ["thought", "objectives"],
+            "hints": {
+              "thought": "How will we measure and threshold each objective?",
+              "objectives": "Array of three objectives with names, descriptions, and thresholds"
+            }
+          }
+        }
+      },
+      "objective_initialization": {
+        "description": "Initialize scoring metrics and satisficing thresholds",
+        "availableActions": {
+          "evaluate_tradeoffs": {
+            "nextState": "trade_off_evaluation",
+            "description": "Begin evaluating current trade-offs",
+            "requiredInputs": ["thought"],
+            "optionalInputs": ["tradeOffMatrix"],
+            "hints": {
+              "thought": "Initial assessment of trade-offs",
+              "tradeOffMatrix": "How improving one objective affects others"
+            }
+          }
+        }
+      },
+      "trade_off_evaluation": {
+        "description": "Evaluate trade-offs and score each objective",
+        "availableActions": {
+          "iterate_solution": {
+            "nextState": "satisficing_iteration",
+            "description": "Iterate on solution to improve balance",
+            "requiredInputs": ["thought", "objectives"],
+            "optionalInputs": ["iterationNumber"],
+            "hints": {
+              "thought": "How can we adjust to better satisfice?",
+              "objectives": "Updated objectives with current scores",
+              "iterationNumber": "Current iteration number"
+            }
+          }
+        }
+      },
+      "satisficing_iteration": {
+        "description": "Iterate on solutions that satisfice across objectives",
+        "availableActions": {
+          "check_equilibrium": {
+            "nextState": "equilibrium_check",
+            "description": "Check if equilibrium is reached",
+            "requiredInputs": ["thought", "equilibriumReached"],
+            "hints": {
+              "thought": "Assessment of current balance",
+              "equilibriumReached": "Do all objectives meet their thresholds?"
+            }
+          }
+        }
+      },
+      "equilibrium_check": {
+        "description": "Check if all objectives meet satisficing thresholds",
+        "availableActions": {
+          "propagate_forward": {
+            "nextState": "propagation_decision",
+            "description": "Propagate solution to next iteration",
+            "requiredInputs": ["thought", "propagatedSolution"],
+            "hints": {
+              "thought": "Why propagate this configuration?",
+              "propagatedSolution": "Solution to carry forward"
+            }
+          },
+          "finalize_balance": {
+            "nextState": "final_balance",
+            "description": "Finalize the balanced solution",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Equilibrium reached - ready to finalize"
+            }
+          }
+        }
+      },
+      "propagation_decision": {
+        "description": "Decide whether to propagate or explore new trade-offs",
+        "availableActions": {
+          "continue_evaluation": {
+            "nextState": "trade_off_evaluation",
+            "description": "Continue evaluating trade-offs",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "New insights for next iteration"
+            }
+          },
+          "refine_solution": {
+            "nextState": "solution_refinement",
+            "description": "Refine based on accumulated insights",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "How to refine the solution"
+            }
+          }
+        }
+      },
+      "solution_refinement": {
+        "description": "Refine solution based on iteration insights",
+        "availableActions": {
+          "recheck_equilibrium": {
+            "nextState": "equilibrium_check",
+            "description": "Check equilibrium after refinement",
+            "requiredInputs": ["thought", "objectives"],
+            "hints": {
+              "thought": "Refined solution assessment",
+              "objectives": "Updated scores after refinement"
+            }
+          }
+        }
+      },
+      "final_balance": {
+        "description": "Present final balanced solution with justification",
+        "availableActions": {
+          "complete": {
+            "nextState": "final_response",
+            "description": "Complete with final answer",
+            "requiredInputs": ["thought", "finalAnswer"],
+            "hints": {
+              "thought": "Final trade-off justification",
+              "finalAnswer": "The balanced solution"
+            }
+          }
+        }
+      }
     }
   },
   "globalActions": {

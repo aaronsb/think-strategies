@@ -5,7 +5,7 @@
   "author": "Aaron Bockelie <aaronsb@github.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aaronsb/think-strategies.git"
+    "url": "git+https://github.com/aaronsb/think-strategies.git"
   },
   "license": "MIT",
   "type": "module",

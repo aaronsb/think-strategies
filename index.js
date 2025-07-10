@@ -582,7 +582,7 @@ The Sequential Thinking tool is powered by a flexible flow engine that supports:
 
 1. **Choose your strategy first!** Don't default to linear. Pick from:
    - linear, chain_of_thought, react, rewoo, scratchpad, 
-   - self_ask, self_consistency, step_back, or tree_of_thoughts
+   - self_ask, self_consistency, step_back, tree_of_thoughts, or trilemma
 
 2. Start your first thought with your chosen strategy:
    - Set the 'strategy' parameter to your selected strategy
@@ -666,6 +666,7 @@ The tool uses semantic routing to guide you through the thinking process:
 | Verify correctness | **self_consistency** | Multiple paths → consensus |
 | Abstract → specific | **step_back** | Find principles first, then apply |
 | Multiple approaches | **tree_of_thoughts** | Explore & evaluate different paths |
+| Three-way trade-offs | **trilemma** | Balance competing objectives through satisficing |
 
 ## Session Management
 
@@ -777,7 +778,7 @@ const thinkingSchema = {
 // Add the think-strategies tool with Zod schema
 server.tool(
   "think-strategies",
-  "A tool for dynamic and reflective problem-solving through structured thoughts using 9 different reasoning strategies: linear (flexible with revisions), chain_of_thought (sequential steps), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
+  "A tool for dynamic and reflective problem-solving through structured thoughts using 10 different reasoning strategies: linear (flexible with revisions), chain_of_thought (sequential steps), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches), trilemma (balance three competing objectives through iterative satisficing). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
   thinkingSchema,
   async (args) => {
     try {

@@ -91,6 +91,18 @@
       "solution_formulation",
       "path_justification",
       "final_response"
+    ],
+    "trilemma": [
+      "problem_reception",
+      "trilemma_identification",
+      "objective_initialization",
+      "trade_off_evaluation",
+      "satisficing_iteration",
+      "equilibrium_check",
+      "propagation_decision",
+      "solution_refinement",
+      "final_balance",
+      "final_response"
     ]
   },
   "stageDescriptions": {
@@ -153,7 +165,16 @@
     "branch_development": "Develop each branch by exploring its reasoning path step by step",
     "branch_evaluation": "Evaluate the promise or feasibility of each reasoning branch",
     "branch_selection": "Select the most promising branch(es) to continue pursuing",
-    "path_justification": "Justify why the selected path was most effective compared to alternatives"
+    "path_justification": "Justify why the selected path was most effective compared to alternatives",
+    
+    "trilemma_identification": "Identify the three competing objectives that cannot all be maximized simultaneously",
+    "objective_initialization": "Initialize scoring metrics and thresholds for each of the three objectives",
+    "trade_off_evaluation": "Evaluate current trade-offs between the three objectives and score each (0-1)",
+    "satisficing_iteration": "Iterate on solutions that satisfice across objectives, adjusting weights based on priorities",
+    "equilibrium_check": "Check if current balance meets satisficing thresholds for all three objectives",
+    "propagation_decision": "Decide whether to propagate current solution forward or explore new trade-offs",
+    "solution_refinement": "Refine the solution based on accumulated trade-off insights across iterations",
+    "final_balance": "Present the final balanced solution with trade-off scores and justification"
   },
   "stageTransitions": {
     "base_sequential": {
@@ -246,6 +267,18 @@
       "continuation_decision": ["branch_development", "branch_creation", "solution_formulation"],
       "solution_formulation": ["path_justification"],
       "path_justification": ["final_response"],
+      "final_response": []
+    },
+    "trilemma": {
+      "problem_reception": ["trilemma_identification"],
+      "trilemma_identification": ["objective_initialization"],
+      "objective_initialization": ["trade_off_evaluation"],
+      "trade_off_evaluation": ["satisficing_iteration"],
+      "satisficing_iteration": ["equilibrium_check"],
+      "equilibrium_check": ["propagation_decision", "final_balance"],
+      "propagation_decision": ["trade_off_evaluation", "solution_refinement"],
+      "solution_refinement": ["equilibrium_check"],
+      "final_balance": ["final_response"],
       "final_response": []
     }
   },
@@ -402,6 +435,26 @@
       "parallel_processing": false,
       "consensus_required": false,
       "abstraction_level": "medium"
+    },
+    "trilemma": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "iterative",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": true,
+      "state_tracking": true,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium",
+      "objective_tracking": true,
+      "trade_off_scoring": true,
+      "satisficing_mode": true
     }
   },
   "promptTemplates": {
@@ -413,6 +466,7 @@
     "self_ask": "Problem: {problem}\n\nTo answer this question, I need to break it down into smaller questions:\n1. {{sub_question_1}}?\n   Answer: {{sub_answer_1}}\n2. {{sub_question_2}}?\n   Answer: {{sub_answer_2}}\n...\nTherefore, the answer to the original question is: {{final_answer}}",
     "self_consistency": "Problem: {problem}\n\nLet me explore multiple reasoning paths:\n\nPath 1: {{reasoning_path_1}}\nAnswer 1: {{answer_1}}\n\nPath 2: {{reasoning_path_2}}\nAnswer 2: {{answer_2}}\n...\n\nBased on consistency across paths, the most reliable answer is: {{final_answer}}",
     "step_back": "Problem: {problem}\n\nBefore solving this specific problem, let's step back and consider the general principles or methods that apply to this type of problem.\n\nGeneral approach: {{general_principle}}\n\nNow let's apply this to our specific problem:\n{{step_by_step_solution}}\n\nTherefore, the answer is: {{final_answer}}",
-    "tree_of_thoughts": "Problem: {problem}\n\nLet's solve this step by step, exploring multiple approaches:\n\n1. First approach: {{approach_1}}\n2. Second approach: {{approach_2}}\n3. Third approach: {{approach_3}}\n\nEvaluating these approaches, the most promising solution is:\n{{solution_formulation}}\n\nTherefore, the answer is: {{final_answer}}"
+    "tree_of_thoughts": "Problem: {problem}\n\nLet's solve this step by step, exploring multiple approaches:\n\n1. First approach: {{approach_1}}\n2. Second approach: {{approach_2}}\n3. Third approach: {{approach_3}}\n\nEvaluating these approaches, the most promising solution is:\n{{solution_formulation}}\n\nTherefore, the answer is: {{final_answer}}",
+    "trilemma": "Problem: {problem}\n\nI'll solve this by balancing three competing objectives through iterative satisficing.\n\nTrilemma Identification:\n1. Objective A: {{objective_1}}\n2. Objective B: {{objective_2}}\n3. Objective C: {{objective_3}}\n\nIterative Trade-off Analysis:\n{{trade_off_iterations}}\n\nFinal Balance:\n- Objective A Score: {{score_1}}/1.0 ({{threshold_1}} threshold)\n- Objective B Score: {{score_2}}/1.0 ({{threshold_2}} threshold)\n- Objective C Score: {{score_3}}/1.0 ({{threshold_3}} threshold)\n\nSolution: {{final_balance}}"
   }
 }
