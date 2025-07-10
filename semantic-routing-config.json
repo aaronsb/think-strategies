@@ -550,7 +550,7 @@
             "description": "Identify the three competing objectives",
             "requiredInputs": ["thought"],
             "hints": {
-              "thought": "What are the three objectives that cannot all be maximized?"
+              "thought": "What are the three objectives that cannot all be maximized? Be specific and measurable. Consider what real-world data you'll need to evaluate these (prices, times, quality scores, etc.)"
             }
           }
         },
@@ -564,8 +564,8 @@
             "description": "Set up scoring metrics and thresholds",
             "requiredInputs": ["thought", "objectives"],
             "hints": {
-              "thought": "How will we measure and threshold each objective?",
-              "objectives": "Array of three objectives with names, descriptions, and thresholds"
+              "thought": "How will we measure and threshold each objective? Consider: What data sources could validate these metrics? (e.g., pricing APIs, review sites, performance benchmarks)",
+              "objectives": "Array of exactly 3 objectives. Each must have: id, name, description, currentScore (0-1), threshold (0-1), and optional priority (0-1)"
             }
           }
         }
@@ -579,8 +579,8 @@
             "requiredInputs": ["thought"],
             "optionalInputs": ["tradeOffMatrix"],
             "hints": {
-              "thought": "Initial assessment of trade-offs",
-              "tradeOffMatrix": "How improving one objective affects others"
+              "thought": "Initial assessment of trade-offs. Consider gathering real data: prices, timings, quality metrics. Use other tools (WebSearch, calculations) to validate assumptions",
+              "tradeOffMatrix": "Array showing impact (-1 to +1) when improving one objective affects another. Consider empirical data to validate these relationships"
             }
           }
         }
@@ -594,8 +594,8 @@
             "requiredInputs": ["thought", "objectives"],
             "optionalInputs": ["iterationNumber"],
             "hints": {
-              "thought": "How can we adjust to better satisfice?",
-              "objectives": "Updated objectives with current scores",
+              "thought": "How can we adjust to better satisfice? Consider: Are there hidden options? Bundle deals? Time-based variations? Use tools to explore alternatives",
+              "objectives": "Updated objectives with NEW currentScore values based on your iteration. Show how scores changed",
               "iterationNumber": "Current iteration number"
             }
           }
@@ -609,8 +609,8 @@
             "description": "Check if equilibrium is reached",
             "requiredInputs": ["thought", "equilibriumReached"],
             "hints": {
-              "thought": "Assessment of current balance",
-              "equilibriumReached": "Do all objectives meet their thresholds?"
+              "thought": "Assessment of current balance. If not at equilibrium, what specific data or options could help? Consider sampling real-world alternatives",
+              "equilibriumReached": "Boolean: true if ALL objectives meet their thresholds, false if any fall short"
             }
           }
         }
@@ -645,7 +645,7 @@
             "description": "Continue evaluating trade-offs",
             "requiredInputs": ["thought"],
             "hints": {
-              "thought": "New insights for next iteration"
+              "thought": "What new data or alternatives should we explore? Consider: market research, user feedback, hidden options, timing variations, bundle opportunities"
             }
           },
           "refine_solution": {
@@ -653,7 +653,7 @@
             "description": "Refine based on accumulated insights",
             "requiredInputs": ["thought"],
             "hints": {
-              "thought": "How to refine the solution"
+              "thought": "How to refine based on data gathered? Consider creative compromises, hybrid approaches, or newly discovered options"
             }
           }
         }
