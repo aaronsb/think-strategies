@@ -29,9 +29,9 @@ flowchart LR
 ### Cyclic Flow (ReAct)
 ```mermaid
 flowchart LR
-    A["Initial\nReasoning"] --> B["Action\nPlanning"] --> C["Action\nExecution"]
+    A["Initial<br/>Reasoning"] --> B["Action<br/>Planning"] --> C["Action<br/>Execution"]
     C --> D["Observation"]
-    D --> E["Reasoning\nUpdate"] --> F["Evaluation"]
+    D --> E["Reasoning<br/>Update"] --> F["Evaluation"]
     F -->|"Need more info"| B
     F -->|"Sufficient info"| G["Solution"]
 ```
@@ -77,15 +77,15 @@ flowchart TD
     A["Problem"] --> B["Approach 1"]
     A --> C["Approach 2"]
     A --> D["Approach 3"]
-    B --> E["Develop\nBranch 1"]
-    C --> F["Develop\nBranch 2"]
-    D --> G["Develop\nBranch 3"]
+    B --> E["Develop<br/>Branch 1"]
+    C --> F["Develop<br/>Branch 2"]
+    D --> G["Develop<br/>Branch 3"]
     E --> H["Evaluate"]
     F --> H
     G --> H
     H --> I["Select Best"]
     I --> J["Continue?"]
-    J -->|"Develop more"| K["Further\nDevelopment"]
+    J -->|"Develop more"| K["Further<br/>Development"]
     J -->|"Sufficient"| L["Solution"]
     K --> H
 ```
@@ -96,17 +96,17 @@ flowchart TD
 ### Iterative Satisficing Flow (Trilemma)
 ```mermaid
 flowchart TD
-    A["Problem with\n3 Objectives"] --> B["Identify\nTrilemma"]
-    B --> C["Initialize\nObjectives\n& Thresholds"]
-    C --> D["Evaluate\nTrade-offs"]
-    D --> E["Score Each\nObjective"]
-    E --> F["Satisficing\nIteration"]
-    F --> G["Check\nEquilibrium"]
-    G --> H{"All Thresholds\nMet?"}
-    H -->|"No"| I["Propagate\nSolution"]
+    A["Problem with<br/>3 Objectives"] --> B["Identify<br/>Trilemma"]
+    B --> C["Initialize<br/>Objectives<br/>& Thresholds"]
+    C --> D["Evaluate<br/>Trade-offs"]
+    D --> E["Score Each<br/>Objective"]
+    E --> F["Satisficing<br/>Iteration"]
+    F --> G["Check<br/>Equilibrium"]
+    G --> H{"All Thresholds<br/>Met?"}
+    H -->|"No"| I["Propagate<br/>Solution"]
     I --> J["Refine"]
     J --> D
-    H -->|"Yes"| K["Final\nBalance"]
+    H -->|"Yes"| K["Final<br/>Balance"]
     K --> L["Solution"]
 ```
 - Three competing objectives tracked
@@ -118,7 +118,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["Problem"] --> B["Initial Plan"]
-    B --> C["Generate\nThought"]
+    B --> C["Generate<br/>Thought"]
     C --> D["Evaluate"]
     D --> E["Revise?"]
     E -->|"Yes"| F["Revision"]
@@ -158,6 +158,11 @@ flowchart TD
 - **Tree of Thoughts**: Perfect for problems with multiple possible solution paths where evaluation and backtracking are beneficial. Great for creative tasks and puzzles. The branching flow supports exploring multiple approaches and selecting the most promising.
 
 - **Trilemma**: Ideal for situations requiring balance between three competing objectives that cannot all be maximized. Perfect for real-world trade-offs in project management, system design, or policy decisions. The iterative satisficing approach finds acceptable compromises.
+  - Uses satisficing (finding "good enough" solutions) rather than optimizing
+  - Requires clear metrics and thresholds for each objective
+  - Employs trade-off matrices to understand interdependencies
+  - Iterates until all objectives meet minimum acceptable levels
+  - Particularly effective when combined with data sampling and validation
 
 - **Base Sequential Thinking**: Most versatile approach that adapts to problem complexity with dynamic thought adjustment, revision, and branching. Good as a fallback strategy. The adaptive flow provides maximum flexibility.
 

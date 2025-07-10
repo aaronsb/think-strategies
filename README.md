@@ -25,11 +25,10 @@ An MCP server implementation that provides a tool for dynamic and reflective pro
 Comprehensive documentation is available in the following files:
 
 - [Executive Summary](./docs/SequentialThinking-ExecutiveSummary.md) - High-level overview of Sequential Thinking
-- [Practical Guide](./docs/SequentialThinking-PracticalGuide.md) - Examples and best practices for using the tool
+- [Practical Guide](./docs/SequentialThinking-PracticalGuide.md) - Examples and best practices for using the tool (includes trilemma scenarios)
 - [Technical Documentation](./docs/SequentialThinking-Documentation.md) - Detailed technical explanation of the architecture
 - [Flow Engine Architecture](./docs/SequentialThinking-FlowEngine.md) - In-depth explanation of the flow engine's flexibility and strategy-specific flows
-- [Strategy Comparison](./docs/strategy-comparison.md) - Detailed comparison of different thinking strategies
-- [Trilemma Strategy Guide](./docs/trilemma-strategy.md) - Guide to using the trilemma strategy for balancing competing objectives
+- [Strategy Comparison](./docs/strategy-comparison.md) - Detailed comparison of all 10 thinking strategies including trilemma
 
 ## Features
 

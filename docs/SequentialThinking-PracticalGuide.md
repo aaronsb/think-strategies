@@ -183,6 +183,113 @@ flowchart TD
 └───────────────────────────────────────────────────────────┘
 ```
 
+### Scenario 4: Trilemma Strategy - Balancing Competing Objectives
+
+The trilemma strategy is designed for situations requiring satisficing balance between three competing objectives that cannot all be maximized simultaneously.
+
+```
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 1/8 [trilemma] [Stage: problem_reception]      │
+├───────────────────────────────────────────────────────────┤
+│ Planning a product launch with three competing objectives:│
+│ - FAST: Launch within 3 months                           │
+│ - CHEAP: Stay under $100K budget                         │
+│ - GOOD: Achieve high quality standards                    │
+│ These objectives conflict - rushing reduces quality,      │
+│ quality costs money, saving money takes time.            │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 2/8 [trilemma] [Stage: objective_initialization]│
+├───────────────────────────────────────────────────────────┤
+│ Setting up measurable thresholds:                        │
+│ - FAST: Score 0.7 threshold (launch by month 4 latest)   │
+│ - CHEAP: Score 0.6 threshold (max $120K acceptable)      │
+│ - GOOD: Score 0.5 threshold (min viable quality)         │
+│ Current scores: FAST: 0.9, CHEAP: 0.3, GOOD: 0.8         │
+│ Budget is severely constrained!                          │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 3/8 [trilemma] [Stage: trade_off_evaluation]   │
+├───────────────────────────────────────────────────────────┤
+│ Evaluating trade-offs:                                    │
+│ - Delaying 1 month saves $30K (helps CHEAP, hurts FAST)  │
+│ - Reducing features saves $40K (helps CHEAP, hurts GOOD) │
+│ - Outsourcing QA saves time (helps FAST, hurts budget)   │
+│ Need to find creative compromises...                     │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 4/8 [trilemma] [Stage: satisficing_iteration]  │
+├───────────────────────────────────────────────────────────┤
+│ Iteration 1: Phased launch approach                      │
+│ - Core features in 3.5 months (FAST: 0.7)               │
+│ - MVP scope reduces cost (CHEAP: 0.55)                   │
+│ - Focus QA on critical paths (GOOD: 0.6)                │
+│ Still below CHEAP threshold, need more adjustments...    │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 5/8 [trilemma] [Stage: propagation_decision]   │
+├───────────────────────────────────────────────────────────┤
+│ Propagating solution forward with new insight:           │
+│ Found a partnership opportunity that provides:           │
+│ - Shared marketing costs (saves $25K)                    │
+│ - Access to their QA team (maintains quality)            │
+│ - Must accommodate their timeline (slight delay)         │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 6/8 [trilemma] [Stage: satisficing_iteration]  │
+├───────────────────────────────────────────────────────────┤
+│ Iteration 2: Partnership model                           │
+│ - Launch in month 4 with partner (FAST: 0.65)           │
+│ - Total cost $95K with sharing (CHEAP: 0.75)            │
+│ - Partner QA maintains standards (GOOD: 0.7)             │
+│ All objectives now meet thresholds!                      │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 7/8 [trilemma] [Stage: equilibrium_check]      │
+├───────────────────────────────────────────────────────────┤
+│ Equilibrium reached:                                      │
+│ ✓ FAST: 0.65 > 0.7 threshold ❌ (Just missed!)          │
+│ ✓ CHEAP: 0.75 > 0.6 threshold ✓                        │
+│ ✓ GOOD: 0.7 > 0.5 threshold ✓                          │
+│ Need minor adjustment to meet FAST threshold...          │
+└───────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────┐
+│ 💭 Thought 8/8 [trilemma] [Stage: final_balance]         │
+├───────────────────────────────────────────────────────────┤
+│ Final solution: Hybrid approach                          │
+│ - Soft launch key features month 3.5 (FAST: 0.7 ✓)      │
+│ - Full launch with partner month 4                      │
+│ - Total cost $98K (CHEAP: 0.68 ✓)                      │
+│ - Maintained quality standards (GOOD: 0.65 ✓)           │
+│ Successfully balanced all three objectives!              │
+└───────────────────────────────────────────────────────────┘
+```
+
+#### Key Trilemma Concepts:
+
+**Satisficing vs Optimizing**: The trilemma strategy acknowledges that real-world problems often require "good enough" solutions across multiple dimensions rather than perfection in any single one.
+
+**Trade-off Matrix**: Understanding how improving one objective affects others is crucial:
+```javascript
+tradeOffMatrix: [
+  {improving: "fast", affecting: "good", impact: -0.8},
+  {improving: "fast", affecting: "cheap", impact: -0.3},
+  {improving: "cheap", affecting: "good", impact: -0.6},
+  {improving: "cheap", affecting: "fast", impact: -0.4},
+  {improving: "good", affecting: "fast", impact: -0.7},
+  {improving: "good", affecting: "cheap", impact: -0.9}
+]
+```
+
+**Iterative Refinement**: The strategy uses multiple iterations to explore different configurations until all objectives meet their minimum thresholds.
+
 ## Best Practices
 
 ### 1. Start with a Reasonable Estimate
@@ -399,6 +506,21 @@ flowchart TD
 4. Evaluate ideas against objectives
 5. Refine and develop the most promising ideas
 6. Present final creative solution
+
+### For Trilemma Problems (Three-Way Trade-offs)
+
+1. **Identify the three competing objectives** - Be specific and measurable
+2. **Set realistic thresholds** - Define minimum acceptable levels for each
+3. **Map the trade-offs** - Understand how improving one affects others
+4. **Iterate toward balance** - Use multiple iterations to find equilibrium
+5. **Accept satisficing** - Recognize that perfection in all three is impossible
+6. **Document the compromise** - Clearly explain why the balance works
+
+Example trilemma use cases:
+- Project Management: Speed vs Quality vs Cost
+- System Design: Performance vs Scalability vs Maintainability
+- Policy Making: Economic Growth vs Environmental Protection vs Social Equity
+- Product Development: Features vs Timeline vs Budget
 
 ## Integration with Other Tools
 
