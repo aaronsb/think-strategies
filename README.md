@@ -29,6 +29,7 @@ Comprehensive documentation is available in the following files:
 - [Technical Documentation](./docs/SequentialThinking-Documentation.md) - Detailed technical explanation of the architecture
 - [Flow Engine Architecture](./docs/SequentialThinking-FlowEngine.md) - In-depth explanation of the flow engine's flexibility and strategy-specific flows
 - [Strategy Comparison](./docs/strategy-comparison.md) - Detailed comparison of different thinking strategies
+- [Trilemma Strategy Guide](./docs/trilemma-strategy.md) - Guide to using the trilemma strategy for balancing competing objectives
 
 ## Features
 
