@@ -11,7 +11,8 @@
             "optionalInputs": ["totalThoughts"],
             "hints": {
               "thought": "Your understanding of the problem. Can include plans for tool calls you intend to make. Use think-tools for MCP server connections and utilities before advancing to the next step.",
-              "totalThoughts": "Estimated steps (easily adjustable as you explore)"
+              "totalThoughts": "Estimated steps (easily adjustable as you explore)",
+              "sessionPurpose": "HELPFUL: Provide a brief (1-2 sentence) purpose for this thinking session - what you're trying to accomplish or analyze. This helps build a searchable knowledge base."
             }
           }
         },
@@ -787,6 +788,24 @@
     "finalAnswer": {
       "type": "string",
       "description": "The final answer or solution"
+    },
+    "sessionPurpose": {
+      "type": "string", 
+      "description": "Brief purpose of this thinking session (helps build searchable knowledge base)"
+    },
+    "qualityRating": {
+      "type": "object",
+      "description": "Rate the session quality on key metrics (1-5 scale) to build knowledge of effective thinking patterns",
+      "properties": {
+        "usefulness": "How useful were the insights? (1-5)",
+        "effectiveness": "How effective was the reasoning process? (1-5)", 
+        "clarity": "How clear was the thinking? (1-5)",
+        "insights": "Quality of insights generated? (1-5)",
+        "strategyFit": "How well did the strategy fit the problem? (1-5)",
+        "efficiency": "How efficiently did thinking progress? (1-5)",
+        "actionability": "How actionable are the results? (1-5)",
+        "reflection": "Brief reflection on what worked well or could be improved"
+      }
     },
     "observation": {
       "type": "string",
