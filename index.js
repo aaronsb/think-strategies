@@ -389,6 +389,11 @@ class SequentialThinkingServer {
     strategy = null;
     isInitialized = false;
     
+    // Session metadata for knowledge building
+    sessionPurpose = null;
+    qualityRating = null;
+    sessionStartTime = null;
+    
     // MCP client integration
     mcpClientManager = null;
     pendingActions = [];
@@ -416,6 +421,11 @@ class SequentialThinkingServer {
         this.strategy = strategy;
         this.stageManager = new StageManager(strategy);
         this.isInitialized = true;
+        
+        // Reset session metadata
+        this.sessionPurpose = null;
+        this.qualityRating = null;
+        this.sessionStartTime = new Date().toISOString();
         
         // Reset dual numbering system
         this.absoluteThoughtNumber = 0;
@@ -526,7 +536,15 @@ class SequentialThinkingServer {
         
         // Check if this is a strategy selection or reset request
         if (data.strategy && (!data.thoughtNumber || data.thoughtNumber === 1)) {
+            // Capture sessionPurpose before reset
+            const capturedSessionPurpose = data.sessionPurpose;
+            
             this.resetSession(data.strategy);
+            
+            // Restore sessionPurpose after reset
+            if (capturedSessionPurpose) {
+                this.sessionPurpose = capturedSessionPurpose;
+            }
             
             // Build semantic response for initial state
             const semanticResponse = this.parameterRouter.buildSemanticResponse(
@@ -740,15 +758,30 @@ class SequentialThinkingServer {
             });
             console.error(formattedThought);
             
-            // If this is the final thought (nextThoughtNeeded is false), save the session
-            if (!validatedInput.nextThoughtNeeded && this.storage) {
+            // Handle session metadata updates
+            if (validatedInput.sessionPurpose) {
+                this.sessionPurpose = validatedInput.sessionPurpose;
+            }
+            if (validatedInput.qualityRating) {
+                this.qualityRating = validatedInput.qualityRating;
+            }
+
+            // Save session incrementally after each thought (for resilience)
+            if (this.storage) {
                 try {
                     const savedPath = await this.storage.saveSession(
                         this.sessionId,
                         this.thoughtHistory,
-                        this.branches
+                        this.branches,
+                        this.sessionPurpose,
+                        this.qualityRating,
+                        this.sessionStartTime
                     );
-                    console.error(chalk.green(`✅ Thinking session saved to: ${savedPath}`));
+                    
+                    // Only log completion message for final thought
+                    if (!validatedInput.nextThoughtNeeded) {
+                        console.error(chalk.green(`✅ Thinking session completed and saved to: ${savedPath}`));
+                    }
                 } catch (saveError) {
                     console.error(chalk.red(`❌ Error saving thinking session: ${saveError.message}`));
                 }
@@ -944,14 +977,39 @@ class ThinkingSessionStorage {
         this.storagePath = storagePath;
     }
 
-    async saveSession(sessionId, thoughtHistory, branches) {
+    calculateAutomaticMetrics(thoughtHistory, sessionStartTime, hasActions) {
+        const sessionEndTime = new Date().toISOString();
+        const durationMs = new Date(sessionEndTime) - new Date(sessionStartTime);
+        const durationMinutes = Math.round(durationMs / (1000 * 60));
+        
+        // Calculate iteration ratio (revisions / total thoughts)
+        const revisionCount = thoughtHistory.filter(t => t.isRevision).length;
+        const iterationRatio = thoughtHistory.length > 0 ? revisionCount / thoughtHistory.length : 0;
+        
+        return {
+            duration: durationMinutes,
+            iterationRatio: Math.round(iterationRatio * 100) / 100, // Round to 2 decimals
+            toolIntegration: hasActions
+        };
+    }
+
+    async saveSession(sessionId, thoughtHistory, branches, sessionPurpose = null, qualityRating = null, sessionStartTime = null) {
         const sessionDir = path.join(this.storagePath, sessionId);
         await fs.ensureDir(sessionDir);
+        
+        // Calculate automatic metrics
+        const hasActions = thoughtHistory.some(t => t.plannedActions || t.actionResults);
+        const automaticMetrics = sessionStartTime ? 
+            this.calculateAutomaticMetrics(thoughtHistory, sessionStartTime, hasActions) : 
+            null;
         
         const sessionData = {
             id: sessionId,
             timestamp: new Date().toISOString(),
             strategy: sessionId.split('-')[0], // Extract strategy from sessionId
+            sessionPurpose,
+            qualityRating,
+            automaticMetrics,
             thoughtHistory,
             branches
         };
@@ -962,7 +1020,200 @@ class ThinkingSessionStorage {
         return filePath;
     }
 
-    async listSessions() {
+    // Extract key topics and terms from thought content
+    extractTopics(thoughtHistory) {
+        const allText = thoughtHistory.map(t => t.thought).join(' ');
+        
+        // Simple topic extraction - remove common words and get meaningful terms
+        const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'among', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall']);
+        
+        const words = allText.toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 2 && !stopWords.has(word));
+        
+        // Count word frequency
+        const wordCounts = {};
+        words.forEach(word => {
+            wordCounts[word] = (wordCounts[word] || 0) + 1;
+        });
+        
+        // Get top terms
+        const topTerms = Object.entries(wordCounts)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 8)
+            .map(([word, count]) => ({ term: word, frequency: count }));
+        
+        return topTerms;
+    }
+
+    // Calculate session complexity based on branching, actions, and thought depth
+    calculateComplexity(thoughtHistory, branches) {
+        const thoughtComplexity = thoughtHistory.length;
+        const branchComplexity = Object.keys(branches).length * 2;
+        const actionComplexity = thoughtHistory.filter(t => t.plannedActions || t.actionResults).length;
+        
+        const totalComplexity = thoughtComplexity + branchComplexity + actionComplexity;
+        
+        if (totalComplexity < 5) return 'simple';
+        if (totalComplexity < 15) return 'moderate';
+        if (totalComplexity < 30) return 'complex';
+        return 'very-complex';
+    }
+
+    // Determine completion status
+    getCompletionStatus(thoughtHistory) {
+        if (thoughtHistory.length === 0) return 'empty';
+        
+        const lastThought = thoughtHistory[thoughtHistory.length - 1];
+        const hasConclusion = lastThought.finalAnswer || !lastThought.nextThoughtNeeded;
+        const hasSignificantProgress = thoughtHistory.length >= 3;
+        
+        if (hasConclusion && hasSignificantProgress) return 'completed';
+        if (hasSignificantProgress) return 'in-progress';
+        return 'started';
+    }
+
+    // Search sessions by content with term scoring
+    async searchSessions(query, options = {}) {
+        const {
+            limit = 10,
+            offset = 0,
+            minScore = 0.1,
+            strategy = null,
+            completionStatus = null
+        } = options;
+        
+        const sessions = await this.getAllSessions();
+        const queryTerms = query.toLowerCase().split(/\s+/).filter(term => term.length > 2);
+        
+        const scoredSessions = sessions.map(session => {
+            const sessionText = session.thoughtHistory.map(t => t.thought).join(' ').toLowerCase();
+            
+            // Calculate relevance score
+            let score = 0;
+            queryTerms.forEach(term => {
+                const regex = new RegExp(term, 'gi');
+                const matches = sessionText.match(regex) || [];
+                score += matches.length;
+            });
+            
+            // Normalize by session length
+            const normalizedScore = score / Math.max(sessionText.length / 1000, 1);
+            
+            return {
+                ...session,
+                searchScore: normalizedScore,
+                matchedTerms: queryTerms.filter(term => sessionText.includes(term))
+            };
+        });
+        
+        // Filter and sort by relevance
+        let filteredSessions = scoredSessions
+            .filter(s => s.searchScore >= minScore)
+            .filter(s => !strategy || s.strategy === strategy)
+            .filter(s => !completionStatus || s.completion === completionStatus)
+            .sort((a, b) => b.searchScore - a.searchScore);
+        
+        const total = filteredSessions.length;
+        filteredSessions = filteredSessions.slice(offset, offset + limit);
+        
+        return {
+            sessions: filteredSessions,
+            total,
+            offset,
+            limit,
+            hasMore: offset + limit < total
+        };
+    }
+
+    async listSessions(options = {}) {
+        const {
+            limit = 10,
+            offset = 0,
+            strategy = null,
+            includeTopics = false,
+            sortBy = 'timestamp' // timestamp, thoughtCount, complexity
+        } = options;
+        
+        await fs.ensureDir(this.storagePath);
+        const dirs = await fs.readdir(this.storagePath);
+        
+        const sessions = [];
+        for (const dir of dirs) {
+            const sessionPath = path.join(this.storagePath, dir, 'session.json');
+            if (await fs.pathExists(sessionPath)) {
+                try {
+                    const sessionData = await fs.readJson(sessionPath);
+                    
+                    const sessionInfo = {
+                        id: sessionData.id,
+                        timestamp: sessionData.timestamp,
+                        strategy: sessionData.strategy || "unknown",
+                        sessionPurpose: sessionData.sessionPurpose,
+                        qualityRating: sessionData.qualityRating,
+                        automaticMetrics: sessionData.automaticMetrics,
+                        thoughtCount: sessionData.thoughtHistory.length,
+                        branchCount: Object.keys(sessionData.branches).length,
+                        completion: this.getCompletionStatus(sessionData.thoughtHistory),
+                        complexity: this.calculateComplexity(sessionData.thoughtHistory, sessionData.branches),
+                        age: `${Math.round((Date.now() - new Date(sessionData.timestamp)) / (1000 * 60))} minutes ago`
+                    };
+                    
+                    if (includeTopics) {
+                        sessionInfo.topics = this.extractTopics(sessionData.thoughtHistory);
+                    }
+                    
+                    sessions.push(sessionInfo);
+                } catch (error) {
+                    console.error(`Error reading session ${dir}:`, error);
+                }
+            }
+        }
+        
+        // Filter by strategy if specified
+        const filteredSessions = strategy ? 
+            sessions.filter(s => s.strategy === strategy) : 
+            sessions;
+        
+        // Sort sessions
+        filteredSessions.sort((a, b) => {
+            switch (sortBy) {
+                case 'thoughtCount':
+                    return b.thoughtCount - a.thoughtCount;
+                case 'complexity':
+                    const complexityOrder = { 'simple': 1, 'moderate': 2, 'complex': 3, 'very-complex': 4 };
+                    return complexityOrder[b.complexity] - complexityOrder[a.complexity];
+                case 'quality':
+                    // Calculate average quality score
+                    const getAvgQuality = (session) => {
+                        if (!session.qualityRating) return 0;
+                        const ratings = Object.values(session.qualityRating).filter(v => typeof v === 'number');
+                        return ratings.length > 0 ? ratings.reduce((sum, val) => sum + val, 0) / ratings.length : 0;
+                    };
+                    return getAvgQuality(b) - getAvgQuality(a);
+                case 'duration':
+                    const getDuration = (session) => session.automaticMetrics?.duration || 0;
+                    return getDuration(a) - getDuration(b); // Shorter duration first (more efficient)
+                case 'timestamp':
+                default:
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+            }
+        });
+        
+        const total = filteredSessions.length;
+        const paginatedSessions = filteredSessions.slice(offset, offset + limit);
+        
+        return {
+            sessions: paginatedSessions,
+            total,
+            offset,
+            limit,
+            hasMore: offset + limit < total
+        };
+    }
+
+    async getAllSessions() {
         await fs.ensureDir(this.storagePath);
         const dirs = await fs.readdir(this.storagePath);
         
@@ -973,11 +1224,9 @@ class ThinkingSessionStorage {
                 try {
                     const sessionData = await fs.readJson(sessionPath);
                     sessions.push({
-                        id: sessionData.id,
-                        timestamp: sessionData.timestamp,
-                        strategy: sessionData.strategy || "unknown",
-                        thoughtCount: sessionData.thoughtHistory.length,
-                        branchCount: Object.keys(sessionData.branches).length
+                        ...sessionData,
+                        completion: this.getCompletionStatus(sessionData.thoughtHistory),
+                        complexity: this.calculateComplexity(sessionData.thoughtHistory, sessionData.branches)
                     });
                 } catch (error) {
                     console.error(`Error reading session ${dir}:`, error);
@@ -1017,6 +1266,19 @@ const thinkingSchema = {
   thoughtNumber: z.number(),
   totalThoughts: z.number(),
   strategy: z.string(),
+  
+  // Session metadata for knowledge building
+  sessionPurpose: z.string().optional(),
+  qualityRating: z.object({
+    usefulness: z.number().min(1).max(5).optional(),
+    effectiveness: z.number().min(1).max(5).optional(),
+    clarity: z.number().min(1).max(5).optional(),
+    insights: z.number().min(1).max(5).optional(),
+    strategyFit: z.number().min(1).max(5).optional(),
+    efficiency: z.number().min(1).max(5).optional(),
+    actionability: z.number().min(1).max(5).optional(),
+    reflection: z.string().optional()
+  }).optional(),
   
   // Strategy-specific parameters
   action: z.string().optional(),
@@ -1189,36 +1451,52 @@ server.tool(
 // Add unified thinking session manager tool
 server.tool(
   "think-session-manager",
-  "Manage thinking sessions: list recent sessions, get details, or resume previous sessions",
+  "Manage thinking sessions: list with pagination/filtering, search by content, get detailed analysis, or resume previous sessions",
   {
-    action: z.enum(["list", "get", "resume"]),
+    action: z.enum(["list", "get", "resume", "search"]),
     sessionId: z.string().optional(),
-    limit: z.number().optional().default(10)
+    limit: z.number().optional().default(10),
+    offset: z.number().optional().default(0),
+    query: z.string().optional(),
+    strategy: z.string().optional(),
+    includeTopics: z.boolean().optional().default(false),
+    sortBy: z.enum(["timestamp", "thoughtCount", "complexity", "quality", "duration"]).optional().default("timestamp"),
+    completionStatus: z.enum(["empty", "started", "in-progress", "completed"]).optional(),
+    minScore: z.number().optional().default(0.1)
   },
   async (args) => {
     try {
       switch (args.action) {
         case "list":
-          const sessions = await sessionStorage.listSessions();
+          const listOptions = {
+            limit: args.limit,
+            offset: args.offset,
+            strategy: args.strategy,
+            includeTopics: args.includeTopics,
+            sortBy: args.sortBy
+          };
           
-          // Sort by timestamp (most recent first) and limit
-          const recentSessions = sessions
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, args.limit);
+          const listResult = await sessionStorage.listSessions(listOptions);
           
           return {
             content: [{
               type: "text",
               text: JSON.stringify({
                 action: "list",
-                totalSessions: sessions.length,
-                recentSessions: recentSessions.map(s => ({
-                  id: s.id,
+                total: listResult.total,
+                offset: listResult.offset,
+                limit: listResult.limit,
+                hasMore: listResult.hasMore,
+                sessions: listResult.sessions.map(s => ({
+                  sessionId: s.id.split('-').slice(-2).join('-'), // Extract timestamp portion  
+                  description: s.sessionPurpose || s.topics?.[0]?.term + ' analysis' || 'General thinking session',
                   strategy: s.strategy,
-                  timestamp: s.timestamp,
+                  quality: s.qualityRating ? Object.values(s.qualityRating).filter(v => typeof v === 'number').reduce((sum, val, _, arr) => sum + val / arr.length, 0).toFixed(1) : null,
+                  duration: s.automaticMetrics?.duration || null,
                   thoughtCount: s.thoughtCount,
-                  branchCount: s.branchCount,
-                  age: `${Math.round((Date.now() - new Date(s.timestamp)) / (1000 * 60))} minutes ago`
+                  completion: s.completion,
+                  complexity: s.complexity,
+                  age: s.age
                 }))
               }, null, 2)
             }]
@@ -1229,36 +1507,93 @@ server.tool(
             throw new Error("sessionId required for 'get' action");
           }
           
-          const session = await sessionStorage.getSession(args.sessionId);
+          // Handle both full session ID and shortened version
+          let fullSessionId = args.sessionId;
+          if (!args.sessionId.includes('session-')) {
+            // If it's a shortened ID, we need to find the full ID
+            const allSessions = await sessionStorage.listSessions({ limit: 1000 });
+            const matchingSession = allSessions.sessions.find(s => 
+              s.id.split('-').slice(-2).join('-') === args.sessionId
+            );
+            if (matchingSession) {
+              fullSessionId = matchingSession.id;
+            }
+          }
+          
+          const session = await sessionStorage.getSession(fullSessionId);
           
           if (!session) {
             throw new Error(`Session not found: ${args.sessionId}`);
           }
+          
+          const sessionAnalysis = {
+            id: session.id,
+            strategy: session.strategy,
+            timestamp: session.timestamp,
+            thoughtHistory: session.thoughtHistory.map(t => ({
+              thoughtNumber: t.thoughtNumber,
+              absoluteNumber: t.absoluteNumber,
+              sequenceNumber: t.sequenceNumber,
+              thought: t.thought.substring(0, 150) + (t.thought.length > 150 ? '...' : ''),
+              stage: t.currentStage,
+              hasActions: t.plannedActions ? t.plannedActions.length > 0 : false,
+              hasResults: t.actionResults ? t.actionResults.length > 0 : false
+            })),
+            branches: Object.keys(session.branches),
+            topics: sessionStorage.extractTopics(session.thoughtHistory),
+            complexity: sessionStorage.calculateComplexity(session.thoughtHistory, session.branches),
+            completion: sessionStorage.getCompletionStatus(session.thoughtHistory),
+            summary: {
+              totalThoughts: session.thoughtHistory.length,
+              totalBranches: Object.keys(session.branches).length,
+              finalStage: session.thoughtHistory[session.thoughtHistory.length - 1]?.currentStage,
+              completed: !session.thoughtHistory[session.thoughtHistory.length - 1]?.nextThoughtNeeded
+            }
+          };
           
           return {
             content: [{
               type: "text",
               text: JSON.stringify({
                 action: "get",
-                id: session.id,
-                strategy: session.strategy,
-                timestamp: session.timestamp,
-                thoughtHistory: session.thoughtHistory.map(t => ({
-                  thoughtNumber: t.thoughtNumber,
-                  absoluteNumber: t.absoluteNumber,
-                  sequenceNumber: t.sequenceNumber,
-                  thought: t.thought.substring(0, 100) + (t.thought.length > 100 ? '...' : ''),
-                  stage: t.currentStage,
-                  hasActions: t.plannedActions ? t.plannedActions.length > 0 : false,
-                  hasResults: t.actionResults ? t.actionResults.length > 0 : false
-                })),
-                branches: Object.keys(session.branches),
-                summary: {
-                  totalThoughts: session.thoughtHistory.length,
-                  totalBranches: Object.keys(session.branches).length,
-                  finalStage: session.thoughtHistory[session.thoughtHistory.length - 1]?.currentStage,
-                  completed: !session.thoughtHistory[session.thoughtHistory.length - 1]?.nextThoughtNeeded
-                }
+                ...sessionAnalysis
+              }, null, 2)
+            }]
+          };
+
+        case "search":
+          if (!args.query) {
+            throw new Error("query required for 'search' action");
+          }
+          
+          const searchOptions = {
+            limit: args.limit,
+            offset: args.offset,
+            minScore: args.minScore,
+            strategy: args.strategy,
+            completionStatus: args.completionStatus
+          };
+          
+          const searchResult = await sessionStorage.searchSessions(args.query, searchOptions);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "search",
+                query: args.query,
+                ...searchResult,
+                sessions: searchResult.sessions.map(s => ({
+                  sessionId: s.id.split('-').slice(-2).join('-'), // Extract timestamp portion for shorter ID
+                  description: s.sessionPurpose || s.thoughtHistory[0]?.thought.substring(0, 100) + '...' || 'No description available',
+                  strategy: s.strategy,
+                  quality: s.qualityRating ? Object.values(s.qualityRating).filter(v => typeof v === 'number').reduce((sum, val, _, arr) => sum + val / arr.length, 0).toFixed(1) : null,
+                  duration: s.automaticMetrics?.duration || null,
+                  completion: s.completion,
+                  searchScore: s.searchScore.toFixed(2),
+                  matchedTerms: s.matchedTerms,
+                  age: `${Math.round((Date.now() - new Date(s.timestamp)) / (1000 * 60))}m ago`
+                }))
               }, null, 2)
             }]
           };
@@ -1268,7 +1603,20 @@ server.tool(
             throw new Error("sessionId required for 'resume' action");
           }
           
-          const resumeSession = await sessionStorage.getSession(args.sessionId);
+          // Handle both full session ID and shortened version
+          let fullResumeSessionId = args.sessionId;
+          if (!args.sessionId.includes('session-')) {
+            // If it's a shortened ID, we need to find the full ID
+            const allSessions = await sessionStorage.listSessions({ limit: 1000 });
+            const matchingSession = allSessions.sessions.find(s => 
+              s.id.split('-').slice(-2).join('-') === args.sessionId
+            );
+            if (matchingSession) {
+              fullResumeSessionId = matchingSession.id;
+            }
+          }
+          
+          const resumeSession = await sessionStorage.getSession(fullResumeSessionId);
           
           if (!resumeSession) {
             throw new Error(`Session not found: ${args.sessionId}`);
