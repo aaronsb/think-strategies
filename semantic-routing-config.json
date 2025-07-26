@@ -10,7 +10,7 @@
             "requiredInputs": ["thought"],
             "optionalInputs": ["totalThoughts"],
             "hints": {
-              "thought": "Your understanding of the problem. Can include plans for tool calls you intend to make. Feel free to call other tools for information before advancing to the next step.",
+              "thought": "Your understanding of the problem. Can include plans for tool calls you intend to make. Use think-tools for MCP server connections and utilities before advancing to the next step.",
               "totalThoughts": "Estimated steps (easily adjustable as you explore)"
             }
           }
@@ -25,7 +25,7 @@
             "description": "Ready to start thinking through the problem? (Use other tools anytime before advancing)",
             "requiredInputs": ["thought"],
             "hints": {
-              "thought": "Your planned approach. Can outline which tools you plan to call and when. Execute tool calls before advancing or include tool call plans in your thinking."
+              "thought": "Your planned approach. Can outline which tools you plan to call and when. Use think-tools for connections and utilities, or include tool call plans in your thinking."
             }
           }
         }
@@ -176,11 +176,20 @@
         }
       },
       "action_planning": {
-        "description": "Plan the action to execute",
+        "description": "Plan the action to execute - specify MCP server tools to call",
         "availableActions": {
-          "execute": {
+          "plan_mcp_actions": {
             "nextState": "action_execution",
-            "description": "Execute the planned action",
+            "description": "Plan specific MCP server tool calls",
+            "requiredInputs": ["thought", "plannedActions"],
+            "hints": {
+              "thought": "Explanation of what actions you plan to take and why",
+              "plannedActions": "Array of actions: [{server: 'server-name', tool: 'tool-name', parameters: {...}, expectedInfo: 'what you expect to learn'}]"
+            }
+          },
+          "execute_legacy": {
+            "nextState": "action_execution", 
+            "description": "Execute using legacy action format",
             "requiredInputs": ["thought", "action"],
             "hints": {
               "thought": "Explanation of the action",
@@ -190,11 +199,20 @@
         }
       },
       "action_execution": {
-        "description": "Execute the action",
+        "description": "Execute planned actions using think-tools(action='execute-actions'), then return with results",
         "availableActions": {
-          "observe": {
+          "integrate_results": {
             "nextState": "observation_reception",
-            "description": "Record observation from action",
+            "description": "Integrate action results back into thinking",
+            "requiredInputs": ["thought", "actionResults"],
+            "hints": {
+              "thought": "Analysis of the action results and what they mean",
+              "actionResults": "Array of results from executed actions. Use think-tools(action='execute-actions') first to get these results."
+            }
+          },
+          "observe_legacy": {
+            "nextState": "observation_reception",
+            "description": "Record observation from legacy action",
             "requiredInputs": ["thought", "observation"],
             "hints": {
               "thought": "What you observed",
@@ -204,15 +222,17 @@
         }
       },
       "observation_reception": {
-        "description": "Receive observation from action",
+        "description": "Process observations from executed actions",
         "availableActions": {
           "update_reasoning": {
             "nextState": "reasoning_update",
-            "description": "Update reasoning with observation",
-            "requiredInputs": ["thought", "observation"],
+            "description": "Update reasoning with new information",
+            "requiredInputs": ["thought"],
+            "optionalInputs": ["observation", "actionResults"],
             "hints": {
-              "thought": "How the observation affects your reasoning",
-              "observation": "What you observed from the action"
+              "thought": "How the new information affects your reasoning and next steps",
+              "observation": "Legacy observation format",
+              "actionResults": "Results from MCP server tool calls"
             }
           }
         }
@@ -268,11 +288,20 @@
         }
       },
       "tool_call_specification": {
-        "description": "Define all tool calls needed",
+        "description": "Define all MCP server tool calls needed for parallel execution",
         "availableActions": {
-          "execute_tools": {
+          "plan_mcp_tools": {
             "nextState": "working_phase",
-            "description": "Execute tool calls in parallel",
+            "description": "Plan MCP server tool calls for parallel execution",
+            "requiredInputs": ["thought", "plannedActions"],
+            "hints": {
+              "thought": "Strategy for parallel tool execution",
+              "plannedActions": "Array of MCP actions: [{server: 'server-name', tool: 'tool-name', parameters: {...}, expectedInfo: 'expected result'}]"
+            }
+          },
+          "execute_legacy_tools": {
+            "nextState": "working_phase",
+            "description": "Execute using legacy tool format",
             "requiredInputs": ["thought", "toolCalls"],
             "hints": {
               "thought": "Tool execution strategy",
@@ -766,6 +795,16 @@
     "action": {
       "type": "string",
       "description": "Specific action to perform"
+    },
+    "plannedActions": {
+      "type": "array",
+      "description": "Array of planned MCP server tool calls: [{server, tool, parameters, expectedInfo}]",
+      "contextual": true
+    },
+    "actionResults": {
+      "type": "array", 
+      "description": "Array of results from executed MCP server tool calls",
+      "contextual": true
     }
   }
 }

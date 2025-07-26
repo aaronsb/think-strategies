@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { z } from "zod";
 import fs from 'fs-extra';
 import path from 'path-browserify';
@@ -268,7 +270,115 @@ class ParameterRouter {
     }
 }
 
-// Enhanced Sequential Thinking implementation
+// MCP Client Manager for connecting to other MCP servers
+class MCPClientManager {
+    constructor() {
+        this.clients = new Map();
+        this.availableServers = new Map();
+    }
+
+    async connectToServer(serverName, command, args = []) {
+        if (this.clients.has(serverName)) {
+            return this.clients.get(serverName);
+        }
+
+        try {
+            const client = new Client({
+                name: `thinking-server-client-${serverName}`,
+                version: "1.0.0"
+            }, {
+                capabilities: {}
+            });
+
+            const transport = new StdioClientTransport({
+                command: command,
+                args: args
+            });
+
+            await client.connect(transport);
+            
+            this.clients.set(serverName, client);
+            this.availableServers.set(serverName, { command, args });
+            
+            console.error(chalk.green(`🔗 Connected to MCP server: ${serverName}`));
+            return client;
+        } catch (error) {
+            console.error(chalk.red(`❌ Failed to connect to ${serverName}: ${error.message}`));
+            throw error;
+        }
+    }
+
+    async disconnectFromServer(serverName) {
+        const client = this.clients.get(serverName);
+        if (client) {
+            await client.close();
+            this.clients.delete(serverName);
+            this.availableServers.delete(serverName);
+            console.error(chalk.yellow(`🔌 Disconnected from MCP server: ${serverName}`));
+        }
+    }
+
+    async executeToolCall(serverName, toolName, parameters, context = {}) {
+        const client = this.clients.get(serverName);
+        if (!client) {
+            throw new Error(`Not connected to server: ${serverName}`);
+        }
+
+        try {
+            console.error(chalk.cyan(`🔧 Executing ${serverName}.${toolName}`));
+            const result = await client.callTool({
+                name: toolName,
+                arguments: parameters || {}
+            });
+
+            return {
+                success: true,
+                result: result,
+                server: serverName,
+                tool: toolName,
+                parameters: parameters,
+                context: context,
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error(chalk.red(`❌ Tool call failed: ${serverName}.${toolName} - ${error.message}`));
+            return {
+                success: false,
+                error: error.message,
+                server: serverName,
+                tool: toolName,
+                parameters: parameters,
+                context: context,
+                timestamp: new Date().toISOString()
+            };
+        }
+    }
+
+    async listAvailableTools(serverName) {
+        const client = this.clients.get(serverName);
+        if (!client) {
+            throw new Error(`Not connected to server: ${serverName}`);
+        }
+
+        try {
+            const tools = await client.listTools();
+            return tools.tools || [];
+        } catch (error) {
+            console.error(chalk.red(`❌ Failed to list tools for ${serverName}: ${error.message}`));
+            return [];
+        }
+    }
+
+    getConnectedServers() {
+        return Array.from(this.clients.keys());
+    }
+
+    isConnected(serverName) {
+        return this.clients.has(serverName);
+    }
+}
+
+// Sequential Thinking implementation
 class SequentialThinkingServer {
     thoughtHistory = [];
     branches = {};
@@ -279,9 +389,19 @@ class SequentialThinkingServer {
     strategy = null;
     isInitialized = false;
     
+    // MCP client integration
+    mcpClientManager = null;
+    pendingActions = [];
+    actionResults = [];
+    
+    // Dual numbering system
+    absoluteThoughtNumber = 0;
+    sequenceThoughtNumber = 0;
+    
     constructor(storage) {
         this.storage = storage;
         this.parameterRouter = new ParameterRouter();
+        this.mcpClientManager = new MCPClientManager();
         console.error(chalk.blue("Sequential Thinking Server initialized - waiting for strategy selection"));
     }
     
@@ -296,6 +416,15 @@ class SequentialThinkingServer {
         this.strategy = strategy;
         this.stageManager = new StageManager(strategy);
         this.isInitialized = true;
+        
+        // Reset dual numbering system
+        this.absoluteThoughtNumber = 0;
+        this.sequenceThoughtNumber = 0;
+        
+        // Reset action tracking
+        this.pendingActions = [];
+        this.actionResults = [];
+        
         console.error(`New thinking session started with ID: ${this.sessionId} using strategy: ${strategy}`);
     }
     
@@ -305,6 +434,91 @@ class SequentialThinkingServer {
             .replace('T', '-')
             .replace(/\..+/, '');
         return `${strategy}-session-${timestamp}`;
+    }
+
+    // Action planning and execution methods
+    async connectToMCPServer(serverName, command, args = []) {
+        try {
+            await this.mcpClientManager.connectToServer(serverName, command, args);
+            return {
+                success: true,
+                message: `Connected to ${serverName}`,
+                connectedServers: this.mcpClientManager.getConnectedServers()
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                connectedServers: this.mcpClientManager.getConnectedServers()
+            };
+        }
+    }
+
+    async executeAction(action) {
+        const { server, tool, parameters, context } = action;
+        
+        if (!this.mcpClientManager.isConnected(server)) {
+            throw new Error(`Not connected to MCP server: ${server}`);
+        }
+
+        console.error(chalk.blue(`🎯 Executing planned action: ${server}.${tool}`));
+        const result = await this.mcpClientManager.executeToolCall(server, tool, parameters, {
+            ...context,
+            sessionId: this.sessionId,
+            strategy: this.strategy,
+            thoughtNumber: this.absoluteThoughtNumber
+        });
+
+        this.actionResults.push(result);
+        console.error(chalk.green(`✅ Action completed: ${server}.${tool}`));
+        
+        return result;
+    }
+
+    async executePendingActions() {
+        if (this.pendingActions.length === 0) {
+            return [];
+        }
+
+        console.error(chalk.cyan(`⚡ Executing ${this.pendingActions.length} pending actions`));
+        const results = [];
+
+        for (const action of this.pendingActions) {
+            try {
+                const result = await this.executeAction(action);
+                results.push(result);
+            } catch (error) {
+                console.error(chalk.red(`❌ Action failed: ${error.message}`));
+                results.push({
+                    success: false,
+                    error: error.message,
+                    action: action
+                });
+            }
+        }
+
+        this.pendingActions = []; // Clear pending actions after execution
+        return results;
+    }
+
+    planAction(server, tool, parameters, expectedInfo) {
+        const action = {
+            server,
+            tool,
+            parameters,
+            expectedInfo,
+            plannedAt: new Date().toISOString(),
+            context: {
+                sessionId: this.sessionId,
+                strategy: this.strategy,
+                currentStage: this.stageManager.getCurrentStage()
+            }
+        };
+
+        this.pendingActions.push(action);
+        console.error(chalk.yellow(`📋 Planned action: ${server}.${tool} - ${expectedInfo}`));
+        
+        return action;
     }
 
     validateThoughtData(input) {
@@ -388,11 +602,29 @@ class SequentialThinkingServer {
             console.error(chalk.magenta(`🔀 Switched strategy to: ${data.strategy}`));
         }
         
+        // Handle action planning - if plannedActions are provided, add them to pending actions
+        if (data.plannedActions && Array.isArray(data.plannedActions)) {
+            for (const actionPlan of data.plannedActions) {
+                const { server, tool, parameters, expectedInfo } = actionPlan;
+                if (server && tool) {
+                    this.planAction(server, tool, parameters, expectedInfo || `Execute ${server}.${tool}`);
+                }
+            }
+        }
+        
+        // Handle action results - if actionResults are provided, integrate them
+        if (data.actionResults && Array.isArray(data.actionResults)) {
+            this.actionResults.push(...data.actionResults);
+            console.error(chalk.green(`📥 Integrated ${data.actionResults.length} action results`));
+        }
+        
         // Return validated data
         return {
             ...data,
             strategy: this.strategy,
-            currentStage: this.stageManager.getCurrentStage()
+            currentStage: this.stageManager.getCurrentStage(),
+            pendingActions: this.pendingActions.length,
+            actionResults: this.actionResults
         };
     }
 
@@ -407,7 +639,9 @@ class SequentialThinkingServer {
             branchId,
             strategy,
             currentStage,
-            nextThoughtNeeded
+            nextThoughtNeeded,
+            absoluteNumber,
+            sequenceNumber
         } = thoughtData;
         
         let prefix = '';
@@ -428,7 +662,8 @@ class SequentialThinkingServer {
         
         const strategyInfo = chalk.magenta(`[${strategy}]`);
         const stageInfo = chalk.cyan(`[Stage: ${currentStage}]`);
-        const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context} ${strategyInfo} ${stageInfo}`;
+        const dualNumbering = absoluteNumber ? chalk.gray(`[A${absoluteNumber}|S${sequenceNumber}]`) : '';
+        const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context} ${dualNumbering} ${strategyInfo} ${stageInfo}`;
         const border = '─'.repeat(Math.max(header.length, (thought || '').length) + 4);
         
         // Add continuation hint if more thoughts are needed
@@ -472,6 +707,22 @@ class SequentialThinkingServer {
             if (validatedInput.thoughtNumber > validatedInput.totalThoughts) {
                 validatedInput.totalThoughts = validatedInput.thoughtNumber;
             }
+            
+            // Update dual numbering system
+            this.absoluteThoughtNumber++;
+            
+            // Handle branching - reset sequence number for new branches
+            if (validatedInput.branchFromThought && validatedInput.branchId) {
+                // Reset sequence numbering for new branch
+                this.sequenceThoughtNumber = 1;
+                console.error(chalk.green(`🌿 New branch ${validatedInput.branchId} started from thought A${validatedInput.branchFromThought}`));
+            } else {
+                this.sequenceThoughtNumber++;
+            }
+            
+            // Add dual numbering to validated input
+            validatedInput.absoluteNumber = this.absoluteThoughtNumber;
+            validatedInput.sequenceNumber = this.sequenceThoughtNumber;
             
             this.thoughtHistory.push(validatedInput);
             
@@ -759,26 +1010,41 @@ const server = new McpServer({
   vendor: "Aaron Bockelie"
 });
 
-// Define the schema using Zod
+// Define the core thinking schema (cleaned up - branching moved to think-tools)
 const thinkingSchema = {
   thought: z.string(),
   nextThoughtNeeded: z.boolean(),
   thoughtNumber: z.number(),
   totalThoughts: z.number(),
   strategy: z.string(),
+  
+  // Strategy-specific parameters
   action: z.string().optional(),
   observation: z.string().optional(),
   finalAnswer: z.string().optional(),
-  isRevision: z.boolean().optional(),
-  revisesThought: z.number().optional(),
-  branchFromThought: z.number().optional(),
-  branchId: z.string().optional()
+  
+  // Action integration for think→act→reflect workflow
+  plannedActions: z.array(z.object({
+    server: z.string(),
+    tool: z.string(),
+    parameters: z.record(z.any()).optional(),
+    expectedInfo: z.string().optional()
+  })).optional(),
+  
+  actionResults: z.array(z.object({
+    success: z.boolean(),
+    result: z.any().optional(),
+    error: z.string().optional(),
+    server: z.string(),
+    tool: z.string(),
+    timestamp: z.string()
+  })).optional()
 };
 
 // Add the think-strategies tool with Zod schema
 server.tool(
-  "think-strategies",
-  "A tool for dynamic and reflective problem-solving through structured thoughts using 10 different reasoning strategies: linear (flexible with revisions), chain_of_thought (sequential steps), react (reasoning + actions), rewoo (planning + parallel tools), scratchpad (iterative calculations), self_ask (sub-questions), self_consistency (multiple paths), step_back (abstract principles first), tree_of_thoughts (explore & evaluate branches), trilemma (balance three competing objectives through iterative satisficing). Set 'strategy' parameter to choose. Access documentation resource for detailed guidance. Works as force multiplier with other tools.",
+  "think-strategies", 
+  "Core thinking tool for structured problem-solving using 10 reasoning strategies. Choose your strategy (linear, chain_of_thought, react, rewoo, scratchpad, self_ask, self_consistency, step_back, tree_of_thoughts, trilemma) and engage in guided thinking with think→act→reflect workflows. Plan actions with 'plannedActions', integrate results with 'actionResults'. Use think-tools for utilities and think-session-manager for session persistence.",
   thinkingSchema,
   async (args) => {
     try {
@@ -794,6 +1060,270 @@ server.tool(
     } catch (error) {
       console.error("DEBUG: Error in tool handler:", error);
       console.error("DEBUG: Error stack:", error.stack);
+      throw error;
+    }
+  }
+);
+
+// Add consolidated thinking tools
+server.tool(
+  "think-tools",
+  "Utilities for thinking workflows: connect to MCP servers, execute actions, check status, create branches",
+  {
+    action: z.enum(["connect-server", "execute-actions", "server-status", "create-branch"]),
+    serverName: z.string().optional(),
+    command: z.string().optional(),
+    args: z.array(z.string()).optional(),
+    branchId: z.string().optional(),
+    branchFromThought: z.number().optional(),
+    thought: z.string().optional()
+  },
+  async (args) => {
+    try {
+      switch (args.action) {
+        case "connect-server":
+          if (!args.serverName || !args.command) {
+            throw new Error("serverName and command required for 'connect-server' action");
+          }
+          
+          const connectResult = await thinkingServer.connectToMCPServer(
+            args.serverName, 
+            args.command, 
+            args.args || []
+          );
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "connect-server",
+                ...connectResult
+              }, null, 2)
+            }]
+          };
+
+        case "execute-actions":
+          const execResults = await thinkingServer.executePendingActions();
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "execute-actions",
+                executed: execResults.length,
+                results: execResults
+              }, null, 2)
+            }]
+          };
+
+        case "server-status":
+          const status = {
+            action: "server-status",
+            connectedServers: thinkingServer.mcpClientManager.getConnectedServers(),
+            pendingActions: thinkingServer.pendingActions.length,
+            actionResults: thinkingServer.actionResults.length,
+            currentSession: thinkingServer.sessionId,
+            strategy: thinkingServer.strategy,
+            absoluteThoughtNumber: thinkingServer.absoluteThoughtNumber,
+            sequenceThoughtNumber: thinkingServer.sequenceThoughtNumber,
+            branches: Object.keys(thinkingServer.branches),
+            thoughtHistory: thinkingServer.thoughtHistory.length
+          };
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify(status, null, 2)
+            }]
+          };
+
+        case "create-branch":
+          if (!args.branchId || !args.branchFromThought || !args.thought) {
+            throw new Error("branchId, branchFromThought, and thought required for 'create-branch' action");
+          }
+          
+          // Find the source thought
+          const sourceThought = thinkingServer.thoughtHistory.find(
+            t => t.absoluteNumber === args.branchFromThought
+          );
+          
+          if (!sourceThought) {
+            throw new Error(`No thought found with absolute number ${args.branchFromThought}`);
+          }
+          
+          // Create branching thought data
+          const branchData = {
+            thought: args.thought,
+            branchFromThought: args.branchFromThought,
+            branchId: args.branchId,
+            thoughtNumber: 1,
+            totalThoughts: 5, // Default estimate
+            nextThoughtNeeded: true,
+            strategy: thinkingServer.strategy
+          };
+          
+          // Process the branch creation
+          const branchResult = await thinkingServer.processThought(branchData);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "create-branch",
+                message: `Branch '${args.branchId}' created from thought A${args.branchFromThought}`,
+                branchResult: branchResult
+              }, null, 2)
+            }]
+          };
+
+        default:
+          throw new Error(`Unknown action: ${args.action}`);
+      }
+    } catch (error) {
+      console.error(`ERROR: Think-tools action '${args.action}' failed:`, error);
+      throw error;
+    }
+  }
+);
+
+// Add unified thinking session manager tool
+server.tool(
+  "think-session-manager",
+  "Manage thinking sessions: list recent sessions, get details, or resume previous sessions",
+  {
+    action: z.enum(["list", "get", "resume"]),
+    sessionId: z.string().optional(),
+    limit: z.number().optional().default(10)
+  },
+  async (args) => {
+    try {
+      switch (args.action) {
+        case "list":
+          const sessions = await sessionStorage.listSessions();
+          
+          // Sort by timestamp (most recent first) and limit
+          const recentSessions = sessions
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, args.limit);
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "list",
+                totalSessions: sessions.length,
+                recentSessions: recentSessions.map(s => ({
+                  id: s.id,
+                  strategy: s.strategy,
+                  timestamp: s.timestamp,
+                  thoughtCount: s.thoughtCount,
+                  branchCount: s.branchCount,
+                  age: `${Math.round((Date.now() - new Date(s.timestamp)) / (1000 * 60))} minutes ago`
+                }))
+              }, null, 2)
+            }]
+          };
+
+        case "get":
+          if (!args.sessionId) {
+            throw new Error("sessionId required for 'get' action");
+          }
+          
+          const session = await sessionStorage.getSession(args.sessionId);
+          
+          if (!session) {
+            throw new Error(`Session not found: ${args.sessionId}`);
+          }
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "get",
+                id: session.id,
+                strategy: session.strategy,
+                timestamp: session.timestamp,
+                thoughtHistory: session.thoughtHistory.map(t => ({
+                  thoughtNumber: t.thoughtNumber,
+                  absoluteNumber: t.absoluteNumber,
+                  sequenceNumber: t.sequenceNumber,
+                  thought: t.thought.substring(0, 100) + (t.thought.length > 100 ? '...' : ''),
+                  stage: t.currentStage,
+                  hasActions: t.plannedActions ? t.plannedActions.length > 0 : false,
+                  hasResults: t.actionResults ? t.actionResults.length > 0 : false
+                })),
+                branches: Object.keys(session.branches),
+                summary: {
+                  totalThoughts: session.thoughtHistory.length,
+                  totalBranches: Object.keys(session.branches).length,
+                  finalStage: session.thoughtHistory[session.thoughtHistory.length - 1]?.currentStage,
+                  completed: !session.thoughtHistory[session.thoughtHistory.length - 1]?.nextThoughtNeeded
+                }
+              }, null, 2)
+            }]
+          };
+
+        case "resume":
+          if (!args.sessionId) {
+            throw new Error("sessionId required for 'resume' action");
+          }
+          
+          const resumeSession = await sessionStorage.getSession(args.sessionId);
+          
+          if (!resumeSession) {
+            throw new Error(`Session not found: ${args.sessionId}`);
+          }
+          
+          // Restore session state
+          thinkingServer.thoughtHistory = resumeSession.thoughtHistory;
+          thinkingServer.branches = resumeSession.branches;
+          thinkingServer.sessionId = resumeSession.id;
+          thinkingServer.strategy = resumeSession.strategy;
+          thinkingServer.stageManager = new StageManager(resumeSession.strategy);
+          thinkingServer.isInitialized = true;
+          
+          // Reconstruct dual numbering from history
+          const lastThought = resumeSession.thoughtHistory[resumeSession.thoughtHistory.length - 1];
+          thinkingServer.absoluteThoughtNumber = lastThought?.absoluteNumber || 0;
+          thinkingServer.sequenceThoughtNumber = lastThought?.sequenceNumber || 0;
+          
+          // Set stage to last known stage
+          if (lastThought?.currentStage) {
+            thinkingServer.stageManager.currentStage = lastThought.currentStage;
+          }
+          
+          console.error(`📚 Resumed session: ${resumeSession.id} (${resumeSession.strategy})`);
+          
+          // Build semantic response for current state
+          const semanticResponse = thinkingServer.parameterRouter.buildSemanticResponse(
+            thinkingServer.strategy,
+            thinkingServer.stageManager.getCurrentStage(),
+            thinkingServer.thoughtHistory,
+            thinkingServer.sessionId
+          );
+          
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({
+                action: "resume",
+                message: `Resumed session: ${resumeSession.id}`,
+                strategy: resumeSession.strategy,
+                thoughtCount: resumeSession.thoughtHistory.length,
+                currentState: semanticResponse.currentState,
+                absoluteThoughtNumber: thinkingServer.absoluteThoughtNumber,
+                sequenceThoughtNumber: thinkingServer.sequenceThoughtNumber,
+                availableActions: semanticResponse.availableActions,
+                lastThought: lastThought?.thought?.substring(0, 200) + (lastThought?.thought?.length > 200 ? '...' : '')
+              }, null, 2)
+            }]
+          };
+
+        default:
+          throw new Error(`Unknown action: ${args.action}`);
+      }
+    } catch (error) {
+      console.error(`ERROR: Session manager action '${args.action}' failed:`, error);
       throw error;
     }
   }
