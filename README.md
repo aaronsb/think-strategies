@@ -205,7 +205,24 @@ git remote add upstream https://github.com/aaronsb/think-strategies.git
 
 ## Configuration
 
-### Usage with Claude Desktop
+### Using Claude Code CLI (Recommended)
+
+Add the think-strategies MCP server using Claude Code's built-in command:
+
+```bash
+# Add from GitHub (latest version)
+claude mcp add think-strategies "npx" "github:aaronsb/think-strategies" --storage-path "/home/$(whoami)/Documents/thinking"
+
+# Add from local development path
+claude mcp add think-strategies "node" "/path/to/think-strategies/index.js" --storage-path "/home/$(whoami)/Documents/thinking"
+
+# Add with Docker
+claude mcp add think-strategies "docker" "run" "--rm" "-i" "--user" "$(id -u):$(id -g)" "-v" "/home/$(whoami)/Documents/thinking:/app/data" "ghcr.io/aaronsb/think-strategies:latest"
+```
+
+### Manual Configuration
+
+#### Usage with Claude Desktop
 
 Add this to your `claude_desktop_config.json`:
 
