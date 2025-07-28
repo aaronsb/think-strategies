@@ -211,14 +211,21 @@ Add the think-strategies MCP server using Claude Code's built-in command:
 
 ```bash
 # Add from GitHub (latest version)
-claude mcp add think-strategies "npx" "github:aaronsb/think-strategies" --storage-path "/home/$(whoami)/Documents/thinking"
+claude mcp add think-strategies "npx" "github:aaronsb/think-strategies" -- --storage-path "/home/$(whoami)/Documents/thinking"
 
 # Add from local development path
-claude mcp add think-strategies "node" "/path/to/think-strategies/index.js" --storage-path "/home/$(whoami)/Documents/thinking"
+claude mcp add think-strategies "node" "/path/to/think-strategies/index.js" -- --storage-path "/home/$(whoami)/Documents/thinking"
 
 # Add with Docker
 claude mcp add think-strategies "docker" "run" "--rm" "-i" "--user" "$(id -u):$(id -g)" "-v" "/home/$(whoami)/Documents/thinking:/app/data" "ghcr.io/aaronsb/think-strategies:latest"
+
+# Optional: Use user scope to share thinking sessions across all projects
+claude mcp add --scope user think-strategies "npx" "github:aaronsb/think-strategies" -- --storage-path "/home/$(whoami)/Documents/thinking"
 ```
+
+**Scope Options:**
+- **Local** (default): Server available only in current project directory
+- **User** (recommended): Server available globally, allowing you to access all thinking sessions across projects and build a comprehensive knowledge base
 
 ### Manual Configuration
 
