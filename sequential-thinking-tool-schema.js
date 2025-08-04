@@ -24,7 +24,8 @@ export default z.object({
     "self_consistency", 
     "step_back", 
     "tree_of_thoughts",
-    "trilemma"
+    "trilemma",
+    "cyclic_reasoning"
   ]).describe("The thinking strategy being employed"),
   
   currentStage: z.string().optional().describe("Current stage in the thinking process flow"),
@@ -89,6 +90,24 @@ export default z.object({
     configuration: z.record(z.number()),
     overallScore: z.number().min(0).max(1)
   }).optional().describe("Solution propagated from previous iteration (Trilemma)"),
+  
+  // Cyclic Reasoning properties
+  reasoningApproach: z.enum([
+    "thought-first",
+    "question-first", 
+    "solution-first"
+  ]).optional().describe("The cyclic reasoning approach being used (Cyclic Reasoning)"),
+  currentElement: z.enum([
+    "thought",
+    "question",
+    "solution"
+  ]).optional().describe("Current element in the reasoning cycle (Cyclic Reasoning)"),
+  cycleNumber: z.number().int().min(1).optional().describe("Current cycle number (Cyclic Reasoning)"),
+  elementOrder: z.array(z.string()).optional().describe("Order of elements for current approach (Cyclic Reasoning)"),
+  domainContext: z.string().optional().describe("Problem domain for approach selection (Cyclic Reasoning)"),
+  approachRationale: z.string().optional().describe("Reason for selecting this approach (Cyclic Reasoning)"),
+  cycleComplete: z.boolean().optional().describe("Whether the current cycle is complete (Cyclic Reasoning)"),
+  needsApproachAdjustment: z.boolean().optional().describe("Whether to switch reasoning approaches (Cyclic Reasoning)"),
   
   // Verification and solution properties
   hypothesis: z.string().optional().describe("Current solution hypothesis"),

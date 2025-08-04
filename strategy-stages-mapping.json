@@ -103,6 +103,17 @@
       "solution_refinement",
       "final_balance",
       "final_response"
+    ],
+    "cyclic_reasoning": [
+      "problem_reception",
+      "approach_selection",
+      "element_initialization",
+      "thought_processing",
+      "question_processing", 
+      "solution_processing",
+      "cycle_evaluation",
+      "approach_adjustment",
+      "final_response"
     ]
   },
   "stageDescriptions": {
@@ -174,7 +185,15 @@
     "equilibrium_check": "Check if current balance meets satisficing thresholds for all three objectives",
     "propagation_decision": "Decide whether to propagate current solution forward or explore new trade-offs",
     "solution_refinement": "Refine the solution based on accumulated trade-off insights across iterations",
-    "final_balance": "Present the final balanced solution with trade-off scores and justification"
+    "final_balance": "Present the final balanced solution with trade-off scores and justification",
+    
+    "approach_selection": "Select the optimal reasoning approach (thought-first, question-first, or solution-first) based on problem domain",
+    "element_initialization": "Initialize the cyclic reasoning with the first element in the selected approach order",
+    "thought_processing": "Generate analytical thoughts, understand principles, and build conceptual understanding",
+    "question_processing": "Formulate key questions, identify uncertainties, and explore problem boundaries", 
+    "solution_processing": "Generate potential solutions, test approaches, and refine implementation strategies",
+    "cycle_evaluation": "Evaluate if the current cycle has provided sufficient insight or if more cycles are needed",
+    "approach_adjustment": "Optionally adjust the reasoning approach based on insights gained during processing"
   },
   "stageTransitions": {
     "base_sequential": {
@@ -279,6 +298,17 @@
       "propagation_decision": ["trade_off_evaluation", "solution_refinement"],
       "solution_refinement": ["equilibrium_check"],
       "final_balance": ["final_response"],
+      "final_response": []
+    },
+    "cyclic_reasoning": {
+      "problem_reception": ["approach_selection"],
+      "approach_selection": ["element_initialization"],
+      "element_initialization": ["thought_processing", "question_processing", "solution_processing"],
+      "thought_processing": ["question_processing", "solution_processing", "cycle_evaluation"],
+      "question_processing": ["thought_processing", "solution_processing", "cycle_evaluation"],
+      "solution_processing": ["thought_processing", "question_processing", "cycle_evaluation"],
+      "cycle_evaluation": ["thought_processing", "question_processing", "solution_processing", "approach_adjustment", "final_response"],
+      "approach_adjustment": ["element_initialization"],
       "final_response": []
     }
   },
@@ -455,6 +485,26 @@
       "objective_tracking": true,
       "trade_off_scoring": true,
       "satisficing_mode": true
+    },
+    "cyclic_reasoning": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "cyclic",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": true,
+      "state_tracking": true,
+      "question_decomposition": true,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "medium",
+      "approach_adaptation": true,
+      "domain_awareness": true,
+      "element_cycling": true
     }
   },
   "promptTemplates": {
@@ -467,6 +517,7 @@
     "self_consistency": "Problem: {problem}\n\nLet me explore multiple reasoning paths:\n\nPath 1: {{reasoning_path_1}}\nAnswer 1: {{answer_1}}\n\nPath 2: {{reasoning_path_2}}\nAnswer 2: {{answer_2}}\n...\n\nBased on consistency across paths, the most reliable answer is: {{final_answer}}",
     "step_back": "Problem: {problem}\n\nBefore solving this specific problem, let's step back and consider the general principles or methods that apply to this type of problem.\n\nGeneral approach: {{general_principle}}\n\nNow let's apply this to our specific problem:\n{{step_by_step_solution}}\n\nTherefore, the answer is: {{final_answer}}",
     "tree_of_thoughts": "Problem: {problem}\n\nLet's solve this step by step, exploring multiple approaches:\n\n1. First approach: {{approach_1}}\n2. Second approach: {{approach_2}}\n3. Third approach: {{approach_3}}\n\nEvaluating these approaches, the most promising solution is:\n{{solution_formulation}}\n\nTherefore, the answer is: {{final_answer}}",
-    "trilemma": "Problem: {problem}\n\nI'll solve this by balancing three competing objectives through iterative satisficing.\n\nTrilemma Identification:\n1. Objective A: {{objective_1}}\n2. Objective B: {{objective_2}}\n3. Objective C: {{objective_3}}\n\nIterative Trade-off Analysis:\n{{trade_off_iterations}}\n\nFinal Balance:\n- Objective A Score: {{score_1}}/1.0 ({{threshold_1}} threshold)\n- Objective B Score: {{score_2}}/1.0 ({{threshold_2}} threshold)\n- Objective C Score: {{score_3}}/1.0 ({{threshold_3}} threshold)\n\nSolution: {{final_balance}}"
+    "trilemma": "Problem: {problem}\n\nI'll solve this by balancing three competing objectives through iterative satisficing.\n\nTrilemma Identification:\n1. Objective A: {{objective_1}}\n2. Objective B: {{objective_2}}\n3. Objective C: {{objective_3}}\n\nIterative Trade-off Analysis:\n{{trade_off_iterations}}\n\nFinal Balance:\n- Objective A Score: {{score_1}}/1.0 ({{threshold_1}} threshold)\n- Objective B Score: {{score_2}}/1.0 ({{threshold_2}} threshold)\n- Objective C Score: {{score_3}}/1.0 ({{threshold_3}} threshold)\n\nSolution: {{final_balance}}",
+    "cyclic_reasoning": "Problem: {problem}\n\nI'll solve this using cyclic reasoning, cycling through thought, question, and solution elements.\n\nApproach: {{reasoning_approach}} ({{domain_rationale}})\nCycle Order: {{cycle_order}}\n\n{{reasoning_cycles}}\n\nFinal Answer: {{final_answer}}"
   }
 }

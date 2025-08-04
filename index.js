@@ -121,6 +121,238 @@ class StageManager {
     isLastStage() {
         return this.currentStage === "final_response";
     }
+
+    // Cyclic reasoning specific logic
+    determineNextCyclicStage(thoughtData) {
+        if (this.strategy !== 'cyclic_reasoning') {
+            return null;
+        }
+
+        const { 
+            reasoningApproach, 
+            currentElement, 
+            cycleNumber = 1, 
+            cycleComplete = false,
+            needsApproachAdjustment = false,
+            domainContext
+        } = thoughtData;
+
+        // If we need to adjust approach, go to approach_adjustment
+        if (needsApproachAdjustment) {
+            return 'approach_adjustment';
+        }
+
+        // If we're at approach_selection, go to element_initialization
+        if (this.currentStage === 'approach_selection') {
+            return 'element_initialization';
+        }
+
+        // If we're at element_initialization, determine first processing stage
+        if (this.currentStage === 'element_initialization') {
+            const approach = reasoningApproach || this.selectOptimalApproach(domainContext);
+            const elementOrder = this.getElementOrder(approach);
+            return this.getProcessingStage(elementOrder[0]);
+        }
+
+        // Handle cycling between processing stages
+        if (this.isProcessingStage(this.currentStage)) {
+            if (cycleComplete) {
+                return 'cycle_evaluation';
+            } else {
+                // Continue cycling through elements
+                const approach = reasoningApproach || 'thought-first';
+                const elementOrder = this.getElementOrder(approach);
+                const currentElementIndex = this.getCurrentElementIndex(currentElement, elementOrder);
+                const nextElementIndex = (currentElementIndex + 1) % elementOrder.length;
+                const nextElement = elementOrder[nextElementIndex];
+                return this.getProcessingStage(nextElement);
+            }
+        }
+
+        // From cycle_evaluation, either continue cycling or finish
+        if (this.currentStage === 'cycle_evaluation') {
+            if (thoughtData.nextThoughtNeeded) {
+                // Continue with next cycle - go back to first element
+                const approach = reasoningApproach || 'thought-first';
+                const elementOrder = this.getElementOrder(approach);
+                return this.getProcessingStage(elementOrder[0]);
+            } else {
+                return 'final_response';
+            }
+        }
+
+        // From approach_adjustment back to element_initialization
+        if (this.currentStage === 'approach_adjustment') {
+            return 'element_initialization';
+        }
+
+        return null;
+    }
+
+    selectOptimalApproach(domainContext) {
+        const domainMap = {
+            'mathematical': 'thought-first',
+            'scientific': 'thought-first',
+            'science': 'thought-first',
+            'math': 'thought-first',
+            'philosophical': 'question-first',
+            'ethics': 'question-first',
+            'philosophy': 'question-first',
+            'symbolism': 'question-first',
+            'practical': 'solution-first',
+            'emergency': 'solution-first',
+            'ai': 'solution-first',
+            'daily-life': 'solution-first',
+            'creative': 'solution-first'
+        };
+
+        return domainMap[domainContext?.toLowerCase()] || 'thought-first';
+    }
+
+    getElementOrder(approach) {
+        const orders = {
+            'thought-first': ['thought', 'question', 'solution'],
+            'question-first': ['question', 'thought', 'solution'],
+            'solution-first': ['solution', 'question', 'thought']
+        };
+        return orders[approach] || orders['thought-first'];
+    }
+
+    getProcessingStage(element) {
+        const stageMap = {
+            'thought': 'thought_processing',
+            'question': 'question_processing',
+            'solution': 'solution_processing'
+        };
+        return stageMap[element];
+    }
+
+    isProcessingStage(stage) {
+        return ['thought_processing', 'question_processing', 'solution_processing'].includes(stage);
+    }
+
+    getCurrentElementIndex(currentElement, elementOrder) {
+        return elementOrder.indexOf(currentElement);
+    }
+}
+
+// Domain-based Strategy Selector
+class DomainStrategySelector {
+    static getDomainMapping() {
+        return {
+            // Thought-first domains (analytical, principle-based)
+            'mathematical': 'thought-first',
+            'scientific': 'thought-first', 
+            'science': 'thought-first',
+            'math': 'thought-first',
+            'analytical': 'thought-first',
+            'theoretical': 'thought-first',
+            'physics': 'thought-first',
+            'chemistry': 'thought-first',
+            'engineering': 'thought-first',
+            
+            // Question-first domains (exploratory, philosophical)
+            'philosophical': 'question-first',
+            'ethics': 'question-first',
+            'philosophy': 'question-first',
+            'symbolism': 'question-first',
+            'metaphysics': 'question-first',
+            'existential': 'question-first',
+            'moral': 'question-first',
+            'social': 'question-first',
+            
+            // Solution-first domains (practical, action-oriented)
+            'practical': 'solution-first',
+            'emergency': 'solution-first',
+            'ai': 'solution-first',
+            'daily-life': 'solution-first',
+            'creative': 'solution-first',
+            'business': 'solution-first',
+            'troubleshooting': 'solution-first',
+            'debugging': 'solution-first',
+            'implementation': 'solution-first',
+            'productivity': 'solution-first'
+        };
+    }
+
+    static selectOptimalStrategy(problemDescription, domainHint = null) {
+        // If explicit domain hint provided, use it
+        if (domainHint) {
+            const mapping = this.getDomainMapping();
+            const approach = mapping[domainHint.toLowerCase()];
+            if (approach) {
+                return {
+                    strategy: 'cyclic_reasoning',
+                    reasoningApproach: approach,
+                    domainContext: domainHint,
+                    rationale: `Selected ${approach} approach based on ${domainHint} domain`
+                };
+            }
+        }
+
+        // Analyze problem description for domain keywords
+        if (problemDescription) {
+            const text = problemDescription.toLowerCase();
+            const mapping = this.getDomainMapping();
+            
+            // Check for domain keywords in the problem description
+            for (const [domain, approach] of Object.entries(mapping)) {
+                if (text.includes(domain) || text.includes(domain.slice(0, -1))) { // handle plurals
+                    return {
+                        strategy: 'cyclic_reasoning',
+                        reasoningApproach: approach,
+                        domainContext: domain,
+                        rationale: `Detected ${domain} domain in problem description, using ${approach} approach`
+                    };
+                }
+            }
+
+            // Check for approach-specific keywords
+            if (text.match(/\b(formula|equation|theorem|proof|calculate|derive)\b/)) {
+                return {
+                    strategy: 'cyclic_reasoning',
+                    reasoningApproach: 'thought-first',
+                    domainContext: 'analytical',
+                    rationale: 'Detected analytical keywords, using thought-first approach'
+                };
+            }
+
+            if (text.match(/\b(why|what if|should|ought|meaning|purpose|value)\b/)) {
+                return {
+                    strategy: 'cyclic_reasoning',
+                    reasoningApproach: 'question-first',
+                    domainContext: 'philosophical',
+                    rationale: 'Detected philosophical keywords, using question-first approach'
+                };
+            }
+
+            if (text.match(/\b(how to|implement|fix|solve|urgent|need|do|action)\b/)) {
+                return {
+                    strategy: 'cyclic_reasoning',
+                    reasoningApproach: 'solution-first',
+                    domainContext: 'practical',
+                    rationale: 'Detected practical keywords, using solution-first approach'
+                };
+            }
+        }
+
+        // Default fallback
+        return {
+            strategy: 'cyclic_reasoning',
+            reasoningApproach: 'thought-first',
+            domainContext: 'general',
+            rationale: 'No specific domain detected, defaulting to thought-first approach'
+        };
+    }
+
+    static getApproachDescription(approach) {
+        const descriptions = {
+            'thought-first': 'Analyze principles and build understanding before questioning and solving',
+            'question-first': 'Start with key questions to explore the problem space before developing solutions',
+            'solution-first': 'Begin with practical solutions, then understand why they work'
+        };
+        return descriptions[approach] || 'Unknown approach';
+    }
 }
 
 // Parameter Router for semantic routing
@@ -607,6 +839,13 @@ class SequentialThinkingServer {
                 throw new Error(`Invalid stage transition from ${this.stageManager.getCurrentStage()} to ${data.currentStage}`);
             }
             this.stageManager.transitionTo(data.currentStage);
+        } else if (this.strategy === 'cyclic_reasoning') {
+            // Handle cyclic reasoning automatic transitions
+            const nextStage = this.stageManager.determineNextCyclicStage(data);
+            if (nextStage && this.stageManager.canTransitionTo(nextStage)) {
+                this.stageManager.transitionTo(nextStage);
+                console.error(chalk.cyan(`🔄 Cyclic transition to: ${nextStage}`));
+            }
         }
         
         // Handle strategy switching
