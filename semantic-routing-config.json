@@ -716,6 +716,207 @@
           }
         }
       }
+    },
+    "cyclic_reasoning": {
+      "problem_reception": {
+        "description": "Receive problem for cyclic reasoning approach",
+        "availableActions": {
+          "select_approach": {
+            "nextState": "approach_selection",
+            "description": "Automatically select optimal reasoning approach based on problem domain",
+            "requiredInputs": ["thought"],
+            "optionalInputs": ["domainContext"],
+            "hints": {
+              "thought": "Understanding of the problem. The system will analyze domain and select thought-first, question-first, or solution-first approach",
+              "domainContext": "Optional domain hint (mathematical, philosophical, practical, etc.)"
+            }
+          }
+        },
+        "canSwitchStrategy": true
+      },
+      "approach_selection": {
+        "description": "Select optimal reasoning approach based on problem domain",
+        "availableActions": {
+          "initialize_cycle": {
+            "nextState": "element_initialization", 
+            "description": "Initialize the reasoning cycle with selected approach",
+            "requiredInputs": ["thought", "reasoningApproach"],
+            "optionalInputs": ["elementOrder", "approachRationale"],
+            "hints": {
+              "thought": "Ready to begin cycling through reasoning elements",
+              "reasoningApproach": "Selected approach: thought-first, question-first, or solution-first",
+              "elementOrder": "Order of elements for this approach",
+              "approachRationale": "Why this approach was selected"
+            }
+          }
+        }
+      },
+      "element_initialization": {
+        "description": "Initialize the cyclic reasoning with first element",
+        "availableActions": {
+          "start_thought": {
+            "nextState": "thought_processing",
+            "description": "Begin with thought processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Analytical thinking, understanding principles, building conceptual foundation"
+            }
+          },
+          "start_question": {
+            "nextState": "question_processing", 
+            "description": "Begin with question processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Key questions, uncertainties, problem boundaries, what needs exploration"
+            }
+          },
+          "start_solution": {
+            "nextState": "solution_processing",
+            "description": "Begin with solution processing", 
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Potential solutions, implementation approaches, practical strategies"
+            }
+          }
+        }
+      },
+      "thought_processing": {
+        "description": "Generate analytical thoughts and build understanding",
+        "availableActions": {
+          "continue_to_questions": {
+            "nextState": "question_processing",
+            "description": "Move to question processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What questions arise from your thinking? What needs exploration?"
+            }
+          },
+          "continue_to_solutions": {
+            "nextState": "solution_processing", 
+            "description": "Move to solution processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What solutions emerge from your thinking? How to implement?"
+            }
+          },
+          "evaluate_cycle": {
+            "nextState": "cycle_evaluation",
+            "description": "Evaluate if cycle is complete",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Assess completeness of current cycle before continuing"
+            }
+          }
+        }
+      },
+      "question_processing": {
+        "description": "Formulate key questions and explore problem boundaries",
+        "availableActions": {
+          "continue_to_thoughts": {
+            "nextState": "thought_processing",
+            "description": "Move to thought processing", 
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What thoughts and principles help answer these questions?"
+            }
+          },
+          "continue_to_solutions": {
+            "nextState": "solution_processing",
+            "description": "Move to solution processing",
+            "requiredInputs": ["thought"], 
+            "hints": {
+              "thought": "What solutions address these questions? How to implement?"
+            }
+          },
+          "evaluate_cycle": {
+            "nextState": "cycle_evaluation",
+            "description": "Evaluate if cycle is complete",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Assess completeness of current cycle before continuing"
+            }
+          }
+        }
+      },
+      "solution_processing": {
+        "description": "Generate and refine potential solutions",
+        "availableActions": {
+          "continue_to_thoughts": {
+            "nextState": "thought_processing",
+            "description": "Move to thought processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What principles and understanding support these solutions?"
+            }
+          },
+          "continue_to_questions": {
+            "nextState": "question_processing", 
+            "description": "Move to question processing",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "What questions arise from these solutions? What needs testing?"
+            }
+          },
+          "evaluate_cycle": {
+            "nextState": "cycle_evaluation",
+            "description": "Evaluate if cycle is complete", 
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Assess completeness of current cycle before continuing"
+            }
+          }
+        }
+      },
+      "cycle_evaluation": {
+        "description": "Evaluate cycle completeness and determine next steps",
+        "availableActions": {
+          "continue_cycling": {
+            "nextState": "thought_processing",
+            "description": "Continue with another cycle",
+            "requiredInputs": ["thought", "cycleNumber"],
+            "hints": {
+              "thought": "Why continue cycling? What gaps remain?",
+              "cycleNumber": "Next cycle number"
+            }
+          },
+          "adjust_approach": {
+            "nextState": "approach_adjustment", 
+            "description": "Adjust reasoning approach mid-stream",
+            "requiredInputs": ["thought", "needsApproachAdjustment"],
+            "hints": {
+              "thought": "Why adjust approach? What's not working?", 
+              "needsApproachAdjustment": "Boolean: true to trigger approach change"
+            }
+          },
+          "finalize_answer": {
+            "nextState": "final_response",
+            "description": "Provide final answer",
+            "requiredInputs": ["thought", "finalAnswer"],
+            "hints": {
+              "thought": "Synthesis of all cycles and reasoning",
+              "finalAnswer": "Complete final answer to the problem"
+            }
+          }
+        }
+      },
+      "approach_adjustment": {
+        "description": "Adjust reasoning approach based on insights",
+        "availableActions": {
+          "reinitialize_cycle": {
+            "nextState": "element_initialization",
+            "description": "Restart with new approach",
+            "requiredInputs": ["thought", "reasoningApproach"],
+            "hints": {
+              "thought": "Why the new approach? What changed?",
+              "reasoningApproach": "New approach: thought-first, question-first, or solution-first"
+            }
+          }
+        }
+      },
+      "final_response": {
+        "description": "Provide final synthesized answer",
+        "availableActions": {}
+      }
     }
   },
   "globalActions": {
@@ -762,7 +963,7 @@
     },
     "strategy": {
       "type": "enum",
-      "values": ["linear", "chain_of_thought", "react", "rewoo", "scratchpad", "self_ask", "self_consistency", "step_back", "tree_of_thoughts"],
+      "values": ["linear", "chain_of_thought", "react", "rewoo", "scratchpad", "self_ask", "self_consistency", "step_back", "tree_of_thoughts", "trilemma", "cyclic_reasoning"],
       "description": "The thinking strategy to use"
     },
     "isRevision": {
