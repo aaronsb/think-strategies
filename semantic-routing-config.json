@@ -717,6 +717,70 @@
         }
       }
     },
+    "system_architect": {
+      "problem_reception": {
+        "description": "Receive architectural design problem",
+        "availableActions": {
+          "analyze_requirements": {
+            "nextState": "requirements_analysis",
+            "description": "Analyze system requirements and constraints",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Analysis of system requirements, constraints, and architectural considerations"
+            }
+          }
+        },
+        "canSwitchStrategy": true
+      },
+      "requirements_analysis": {
+        "description": "Analyze requirements and constraints",
+        "availableActions": {
+          "design_architecture": {
+            "nextState": "architecture_design",
+            "description": "Design system architecture",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Architectural design decisions, patterns, and structure"
+            }
+          }
+        }
+      },
+      "architecture_design": {
+        "description": "Design the system architecture",
+        "availableActions": {
+          "evaluate_design": {
+            "nextState": "design_evaluation",
+            "description": "Evaluate architectural design",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Evaluation of design against requirements and best practices"
+            }
+          }
+        }
+      },
+      "design_evaluation": {
+        "description": "Evaluate the architectural design",
+        "availableActions": {
+          "refine_architecture": {
+            "nextState": "architecture_design",
+            "description": "Refine the architecture",
+            "requiredInputs": ["thought"],
+            "hints": {
+              "thought": "Refinements needed to the architecture"
+            }
+          },
+          "finalize_architecture": {
+            "nextState": "final_response",
+            "description": "Finalize the architectural design",
+            "requiredInputs": ["thought", "finalAnswer"],
+            "hints": {
+              "thought": "Final architectural assessment",
+              "finalAnswer": "Complete architectural design and documentation"
+            }
+          }
+        }
+      }
+    },
     "cyclic_reasoning": {
       "problem_reception": {
         "description": "Receive problem for cyclic reasoning approach",
@@ -963,7 +1027,7 @@
     },
     "strategy": {
       "type": "enum",
-      "values": ["linear", "chain_of_thought", "react", "rewoo", "scratchpad", "self_ask", "self_consistency", "step_back", "tree_of_thoughts", "trilemma", "cyclic_reasoning"],
+      "values": ["linear", "chain_of_thought", "react", "rewoo", "scratchpad", "self_ask", "self_consistency", "step_back", "tree_of_thoughts", "trilemma", "system_architect", "cyclic_reasoning"],
       "description": "The thinking strategy to use"
     },
     "isRevision": {

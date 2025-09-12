@@ -104,6 +104,13 @@
       "final_balance",
       "final_response"
     ],
+    "system_architect": [
+      "problem_reception",
+      "requirements_analysis",
+      "architecture_design",
+      "design_evaluation",
+      "final_response"
+    ],
     "cyclic_reasoning": [
       "problem_reception",
       "approach_selection",
@@ -300,6 +307,13 @@
       "final_balance": ["final_response"],
       "final_response": []
     },
+    "system_architect": {
+      "problem_reception": ["requirements_analysis"],
+      "requirements_analysis": ["architecture_design"],
+      "architecture_design": ["design_evaluation"],
+      "design_evaluation": ["architecture_design", "final_response"],
+      "final_response": []
+    },
     "cyclic_reasoning": {
       "problem_reception": ["approach_selection"],
       "approach_selection": ["element_initialization"],
@@ -485,6 +499,23 @@
       "objective_tracking": true,
       "trade_off_scoring": true,
       "satisficing_mode": true
+    },
+    "system_architect": {
+      "thought_visibility": "explicit",
+      "requires_external_tools": false,
+      "path_linearity": "iterative",
+      "backtracking_allowed": true,
+      "verification_step": true,
+      "dynamic_thought_count": true,
+      "revision_allowed": true,
+      "branching_allowed": false,
+      "multiple_paths": false,
+      "path_evaluation": true,
+      "state_tracking": false,
+      "question_decomposition": false,
+      "parallel_processing": false,
+      "consensus_required": false,
+      "abstraction_level": "high"
     },
     "cyclic_reasoning": {
       "thought_visibility": "explicit",

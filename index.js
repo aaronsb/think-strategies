@@ -432,6 +432,12 @@ class ParameterRouter {
     determineActionTaken(strategy, currentStage, providedParams) {
         const availableActions = this.getAvailableActions(strategy, currentStage, []);
         
+        // Handle null availableActions (strategy doesn't exist in config)
+        if (!availableActions) {
+            console.error(`Warning: No available actions for strategy '${strategy}' at stage '${currentStage}'`);
+            return null;
+        }
+        
         // Base parameters that are always present
         const baseParams = ['thought', 'thoughtNumber', 'totalThoughts', 'nextThoughtNeeded', 'strategy'];
         
@@ -763,8 +769,153 @@ class SequentialThinkingServer {
         return action;
     }
 
+    inferMissingParameters(input) {
+        const inferred = { ...input };
+        const autoCompleted = {};
+        
+        // Auto-complete strategy from context or parameter hints
+        if (!inferred.strategy) {
+            // Priority 1: Use active session strategy
+            if (this.isInitialized && this.strategy) {
+                inferred.strategy = this.strategy;
+                autoCompleted.strategy = this.strategy;
+            }
+            // Priority 2: Infer from strategy-specific parameters
+            else if (inferred.action && ['thought', 'action', 'observation'].includes(inferred.action)) {
+                inferred.strategy = 'react';
+                autoCompleted.strategy = 'react (from action parameter)';
+            }
+            else if (inferred.approaches || inferred.approachId || inferred.evaluationScore) {
+                inferred.strategy = 'tree_of_thoughts';
+                autoCompleted.strategy = 'tree_of_thoughts (from ToT parameters)';
+            }
+            else if (inferred.objectives || inferred.tradeOffMatrix || inferred.equilibriumReached) {
+                inferred.strategy = 'trilemma';
+                autoCompleted.strategy = 'trilemma (from objectives)';
+            }
+            else if (inferred.reasoningApproach || inferred.currentElement || inferred.cycleNumber) {
+                inferred.strategy = 'cyclic_reasoning';
+                autoCompleted.strategy = 'cyclic_reasoning (from cycle parameters)';
+            }
+            else if (inferred.subQuestion || inferred.subQuestionAnswer) {
+                inferred.strategy = 'self_ask';
+                autoCompleted.strategy = 'self_ask (from sub-questions)';
+            }
+            else if (inferred.generalPrinciple) {
+                inferred.strategy = 'step_back';
+                autoCompleted.strategy = 'step_back (from principle)';
+            }
+            else if (inferred.reasoningPathId || inferred.pathAnswers) {
+                inferred.strategy = 'self_consistency';
+                autoCompleted.strategy = 'self_consistency (from paths)';
+            }
+            else if (inferred.planningPhase || inferred.toolCalls) {
+                inferred.strategy = 'rewoo';
+                autoCompleted.strategy = 'rewoo (from planning)';
+            }
+            else if (inferred.stateVariables) {
+                inferred.strategy = 'scratchpad';
+                autoCompleted.strategy = 'scratchpad (from state)';
+            }
+            // Priority 3: Analyze thought content
+            else if (inferred.thought) {
+                const thoughtLower = inferred.thought.toLowerCase();
+                if (thoughtLower.includes('observe') || thoughtLower.includes('action:')) {
+                    inferred.strategy = 'react';
+                    autoCompleted.strategy = 'react (from thought keywords)';
+                } else if (thoughtLower.includes('approach') || thoughtLower.includes('branch')) {
+                    inferred.strategy = 'tree_of_thoughts';
+                    autoCompleted.strategy = 'tree_of_thoughts (from thought keywords)';
+                } else if (thoughtLower.includes('step back') || thoughtLower.includes('principle')) {
+                    inferred.strategy = 'step_back';
+                    autoCompleted.strategy = 'step_back (from thought keywords)';
+                } else if (thoughtLower.includes('trade-off') || thoughtLower.includes('balance')) {
+                    inferred.strategy = 'trilemma';
+                    autoCompleted.strategy = 'trilemma (from thought keywords)';
+                } else {
+                    inferred.strategy = 'chain_of_thought';
+                    autoCompleted.strategy = 'chain_of_thought (default)';
+                }
+            }
+            else {
+                inferred.strategy = 'chain_of_thought';
+                autoCompleted.strategy = 'chain_of_thought (default)';
+            }
+        }
+        
+        // Auto-complete thoughtNumber from session history
+        if (inferred.thoughtNumber === undefined || inferred.thoughtNumber === null) {
+            if (this.thoughtHistory && this.thoughtHistory.length > 0) {
+                const lastThought = this.thoughtHistory[this.thoughtHistory.length - 1];
+                inferred.thoughtNumber = (lastThought.thoughtNumber || 0) + 1;
+                autoCompleted.thoughtNumber = `${inferred.thoughtNumber} (continued from ${lastThought.thoughtNumber})`;
+            } else {
+                inferred.thoughtNumber = 1;
+                autoCompleted.thoughtNumber = '1 (session start)';
+            }
+        }
+        
+        // Auto-complete totalThoughts based on context
+        if (inferred.totalThoughts === undefined || inferred.totalThoughts === null) {
+            if (inferred.nextThoughtNeeded === false) {
+                inferred.totalThoughts = inferred.thoughtNumber;
+                autoCompleted.totalThoughts = `${inferred.totalThoughts} (marked complete)`;
+            } else {
+                // Strategy-specific estimates for typical completion
+                const strategyEstimates = {
+                    linear: 3,
+                    chain_of_thought: 5,
+                    react: 7,
+                    rewoo: 6,
+                    scratchpad: 5,
+                    self_ask: 8,
+                    self_consistency: 6,
+                    step_back: 4,
+                    tree_of_thoughts: 10,
+                    trilemma: 8,
+                    cyclic_reasoning: 9
+                };
+                const estimate = strategyEstimates[inferred.strategy] || 5;
+                inferred.totalThoughts = Math.max(inferred.thoughtNumber + 1, estimate);
+                autoCompleted.totalThoughts = `${inferred.totalThoughts} (estimated for ${inferred.strategy})`;
+            }
+        }
+        
+        // Auto-complete nextThoughtNeeded from context
+        if (typeof inferred.nextThoughtNeeded !== 'boolean') {
+            if (inferred.finalAnswer || inferred.equilibriumReached || inferred.hypothesis) {
+                inferred.nextThoughtNeeded = false;
+                autoCompleted.nextThoughtNeeded = 'false (solution reached)';
+            } else if (inferred.thoughtNumber >= inferred.totalThoughts) {
+                inferred.nextThoughtNeeded = false;
+                autoCompleted.nextThoughtNeeded = 'false (reached total)';
+            } else {
+                inferred.nextThoughtNeeded = true;
+                autoCompleted.nextThoughtNeeded = 'true (continuing)';
+            }
+        }
+        
+        // Provide default thought if missing
+        if (!inferred.thought) {
+            inferred.thought = 'Continuing analysis...';
+            autoCompleted.thought = 'default placeholder';
+        }
+        
+        // Store auto-completion hints for response
+        if (Object.keys(autoCompleted).length > 0) {
+            inferred._autoCompletionHints = autoCompleted;
+            console.error(chalk.cyan('🔮 Parameters auto-completed:'));
+            Object.entries(autoCompleted).forEach(([key, value]) => {
+                console.error(chalk.cyan(`   • ${key}: ${value}`));
+            });
+        }
+        
+        return inferred;
+    }
+
     validateThoughtData(input) {
-        const data = input;
+        // Apply intelligent parameter inference to auto-complete missing values
+        const data = this.inferMissingParameters(input);
         
         // Check if this is a strategy selection or reset request
         if (data.strategy && (!data.thoughtNumber || data.thoughtNumber === 1)) {
@@ -805,7 +956,7 @@ class SequentialThinkingServer {
             };
         }
         
-        // Validate required parameters for all strategies
+        // Validate required parameters for all strategies (now with self-healing applied)
         if (!data.thought || typeof data.thought !== 'string') {
             throw new Error('Invalid thought: must be a string');
         }
@@ -1034,13 +1185,22 @@ class SequentialThinkingServer {
                 this.sessionId
             );
             
-            return {
+            // Build response with auto-completion hints if present
+            const response = {
                 ...semanticResponse,
                 thoughtNumber: validatedInput.thoughtNumber,
                 totalThoughts: validatedInput.totalThoughts,
                 nextThoughtNeeded: validatedInput.nextThoughtNeeded,
                 sessionSaved: !validatedInput.nextThoughtNeeded
             };
+            
+            // Include auto-completion hints to help agents
+            if (validatedInput._autoCompletionHints) {
+                response.autoCompletionNote = "🔮 Parameters auto-completed from context. Include these in your next call:";
+                response.autoCompleted = validatedInput._autoCompletionHints;
+            }
+            
+            return response;
         }
         catch (error) {
             console.error("DEBUG: Error in processThought:", error);
@@ -1062,7 +1222,16 @@ A modular tool for dynamic and reflective problem-solving through structured tho
 
 This tool helps analyze problems through flexible thinking processes that can adapt and evolve based on the selected strategy. Each strategy offers a different approach to problem-solving, with its own strengths and specialized use cases. The underlying flow engine supports unfixed step numbers and branching approaches, allowing for truly adaptive reasoning.
 
-**IMPORTANT**: Always specify a 'strategy' parameter when starting. Don't default to linear - choose the strategy that best matches your problem type!
+**NEW: Intelligent Parameter Auto-Completion** 🔮
+The tool now automatically infers missing parameters from context to ensure continuity of thinking. If you forget parameters like 'strategy' or 'thoughtNumber', they will be intelligently inferred based on:
+- Active session context
+- Strategy-specific parameters you provide
+- Keywords in your thought content
+- Previous thought history
+
+When parameters are auto-completed, you'll receive helpful hints in the response showing what was inferred, so you can adjust in subsequent calls if needed.
+
+**IMPORTANT**: While auto-completion helps reduce errors, explicitly providing parameters when known will give you more control over the thinking process.
 
 **KEY FEATURE**: Between any thinking steps, you can call other tools for research, file access, calculations, or actions. The thinking strategy will pause while you gather information, then resume where you left off.
 
@@ -1501,10 +1670,10 @@ const server = new McpServer({
 // Define the core thinking schema (cleaned up - branching moved to think-tools)
 const thinkingSchema = {
   thought: z.string(),
-  nextThoughtNeeded: z.boolean(),
-  thoughtNumber: z.number(),
-  totalThoughts: z.number(),
-  strategy: z.string(),
+  nextThoughtNeeded: z.boolean().optional(),  // Made optional for auto-completion
+  thoughtNumber: z.number().optional(),         // Made optional for auto-completion
+  totalThoughts: z.number().optional(),         // Made optional for auto-completion
+  strategy: z.string().optional(),              // Made optional for auto-completion
   
   // Session metadata for knowledge building
   sessionPurpose: z.string().optional(),
